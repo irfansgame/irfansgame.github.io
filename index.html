@@ -283,6 +283,19 @@
       cursor: pointer;
     }
     .tile-fav.liked { color: #fb7185; border-color: rgba(251, 113, 133, 0.5); }
+    .edit-btn {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 76px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #93c5fd;
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
     .del {
       display: none;
       position: absolute;
@@ -296,6 +309,7 @@
       font-size: 0.75rem;
       cursor: pointer;
     }
+    body.admin-unlocked .edit-btn,
     body.admin-unlocked .del { display: inline-block; }
 
     .strip {
@@ -655,6 +669,47 @@
     </div>
   </div>
 
+  <!-- Edit Custom Item Modal -->
+  <div class="overlay" id="editModal">
+    <div class="dialog">
+      <h3>Game of App bewerken</h3>
+      <input type="hidden" id="editId">
+
+      <div class="field">
+        <label for="editTitle">Naam</label>
+        <input type="text" id="editTitle" placeholder="Nieuwe naam">
+      </div>
+
+      <div class="field">
+        <label for="editCat">Categorie</label>
+        <select id="editCat">
+          <option value="games">Games</option>
+          <option value="apps">Apps</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="editIcon">Afbeelding-link of emoji</label>
+        <input type="text" id="editIcon" placeholder="https://... of 🎮">
+      </div>
+
+      <div class="field" id="editLinkField">
+        <label for="editUrl">Game / App Link (URL)</label>
+        <input type="url" id="editUrl" placeholder="https://voorbeeld.nl/game">
+      </div>
+
+      <div class="field" id="editHtmlField" style="display:none;">
+        <label for="editHtml">HTML-code</label>
+        <textarea id="editHtml"></textarea>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn" onclick="closeEditModal()">Annuleren</button>
+        <button type="button" class="btn pri" onclick="saveEditedItem()">Wijzigingen opslaan</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Player Modal -->
   <div class="player" id="player">
     <div class="player-bar">
@@ -677,4 +732,22 @@
 
     function readJson(key, fallback) {
       try {
-        const parsed = JSON.parse(localStorage.getItem(key) ||
+        const parsed = JSON.parse(localStorage.getItem(key) || "null");
+        return Array.isArray(fallback) ? (Array.isArray(parsed) ? parsed : fallback) : (parsed ?? fallback);
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    const DEFAULT_ITEMS = [];
+
+    let isAdmin = false;
+    let addMode = "link";
+    let uploadedImageData = "";
+    let typedBuffer = "";
+    let customItems = readJson(STORAGE_KEY, []);
+    let favorites = readJson(FAV_KEY, []);
+    let bans = readJson(BAN_KEY, []);
+
+    document.addEventListener("keydown", (e) => {
+      const tag = document
