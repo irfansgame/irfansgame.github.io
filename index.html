@@ -466,13 +466,13 @@
     <section class="gotd-hero" id="gotdHero">
       <div class="gotd-left">
         <span class="gotd-label">GAME VAN DE DAG</span>
-        <h1 class="gotd-title" id="heroTitle">Candy clicker</h1>
+        <h1 class="gotd-title" id="heroTitle">Nog geen game toegevoegd</h1>
         <div class="gotd-actions">
           <button class="gotd-play" id="heroPlayBtn">▶ Spelen</button>
           <button class="gotd-fav" id="heroFavBtn" title="Favoriet">♥</button>
         </div>
       </div>
-      <div class="gotd-preview" id="heroPreview">🍬</div>
+      <div class="gotd-preview" id="heroPreview">🎮</div>
     </section>
 
     <div class="tabs">
@@ -523,7 +523,7 @@
 
         <div class="field">
           <label for="itemTitle">Naam</label>
-          <input type="text" id="itemTitle" placeholder="Bijv. Candy clicker">
+          <input type="text" id="itemTitle" placeholder="Naam van je game of app">
         </div>
 
         <div class="field">
@@ -538,7 +538,7 @@
           <label for="itemFile">Afbeelding (bestand)</label>
           <input type="file" id="itemFile" accept="image/*" onchange="handleFileSelect(event)">
           <span class="sub-label">...of afbeelding-link / emoji</span>
-          <input type="text" id="itemIcon" placeholder="https://... of 🍬">
+          <input type="text" id="itemIcon" placeholder="https://... of 🎮">
         </div>
 
         <div class="field" id="linkField">
@@ -548,7 +548,7 @@
 
         <div class="field" id="htmlField" style="display:none;">
           <label for="itemHtml">Plak hier je HTML-code</label>
-          <textarea id="itemHtml" placeholder="<!DOCTYPE html><html><body><h1>Mijn Game</h1></body></html>"></textarea>
+          <textarea id="itemHtml" placeholder="Plak hier je eigen HTML-code..."></textarea>
         </div>
 
         <div class="dialog-actions">
@@ -639,32 +639,8 @@
     const BANNER_KEY = "irfanhub_banner_v1";
     const ACCENT_KEY = "irfanhub_accent_v1";
 
-    const CANDY_HTML = [
-      "<!DOCTYPE html><html><head><meta charset='utf-8'><style>",
-      "body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#38bdf8,#1d4ed8);color:#fff;font-family:system-ui,sans-serif;user-select:none}",
-      "h1{font-size:2.4rem;text-shadow:0 4px 12px rgba(0,0,0,.35)}",
-      "#candy{font-size:7rem;cursor:pointer;transition:transform .08s}",
-      "#candy:active{transform:scale(.88)}",
-      "#score{font-size:2rem;font-weight:800;margin:14px 0}",
-      "button{padding:10px 20px;border-radius:999px;border:none;background:#ec4899;color:#fff;font-weight:700;cursor:pointer;font-size:1rem}",
-      "</style></head><body>",
-      "<h1>Candy Clicker</h1><div id='candy'>🍬</div><div id='score'>0 Snoepjes</div>",
-      "<button id='upg'>Upgrade (+1 per klik) — 15 snoepjes</button>",
-      "<script>let s=0,p=1,c=15;const sc=document.getElementById('score'),up=document.getElementById('upg');",
-      "document.getElementById('candy').onclick=()=>{s+=p;sc.textContent=s+' Snoepjes'};",
-      "up.onclick=()=>{if(s>=c){s-=c;p++;c=Math.round(c*1.6);sc.textContent=s+' Snoepjes';up.textContent='Upgrade (+1 per klik) — '+c+' snoepjes'}};",
-      "</" + "script></body></html>"
-    ].join("");
-
-    const SKIPPER_HTML = [
-      "<!DOCTYPE html><html><body style='font-family:sans-serif;background:#0b1120;color:#fff;padding:24px;'>",
-      "<h2>YouTube Ad Skipper App</h2><p>Jouw HTML-code draait hier direct in de hub.</p></body></html>"
-    ].join("");
-
-    const DEFAULT_ITEMS = [
-      { id: "def-candy", title: "Candy clicker", category: "games", icon: "🍬", type: "html", html: CANDY_HTML },
-      { id: "def-1", title: "Youtube ad skipper", category: "apps", icon: "⏭️", type: "html", html: SKIPPER_HTML }
-    ];
+    // Geen zelfgemaakte games hier; voeg je eigen items toe via + Toevoegen
+    const DEFAULT_ITEMS = [];
 
     let isAdmin = false;
     let addMode = "link";
@@ -994,14 +970,19 @@
       const all = getAllItems();
 
       const gotd = getGameOfTheDay(all);
+      const favBtn = document.getElementById("heroFavBtn");
+      const playBtn = document.getElementById("heroPlayBtn");
+      const prev = document.getElementById("heroPreview");
+
       if (gotd) {
         document.getElementById("heroTitle").textContent = gotd.title;
-        document.getElementById("heroPlayBtn").onclick = () => launchItem(gotd);
-        const favBtn = document.getElementById("heroFavBtn");
+        playBtn.disabled = false;
+        playBtn.style.opacity = "1";
+        playBtn.onclick = () => launchItem(gotd);
+        favBtn.style.display = "inline-flex";
         favBtn.classList.toggle("liked", favorites.includes(gotd.id));
         favBtn.onclick = (e) => toggleFavorite(gotd.id, e);
 
-        const prev = document.getElementById("heroPreview");
         const isImg = gotd.icon.startsWith("http") || gotd.icon.startsWith("data:image/");
         if (isImg) {
           prev.style.backgroundImage = `url('${gotd.icon}')`;
@@ -1011,6 +992,15 @@
           prev.textContent = gotd.icon;
         }
         prev.onclick = () => launchItem(gotd);
+      } else {
+        document.getElementById("heroTitle").textContent = "Nog geen game toegevoegd";
+        playBtn.disabled = true;
+        playBtn.style.opacity = "0.55";
+        playBtn.onclick = null;
+        favBtn.style.display = "none";
+        prev.style.backgroundImage = "";
+        prev.textContent = "🎮";
+        prev.onclick = null;
       }
 
       const filtered = all.filter(item => {
