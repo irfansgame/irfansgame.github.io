@@ -68,6 +68,10 @@
     }
     .btn.pri:hover { filter: brightness(1.12); }
 
+    /* Admin controls hidden until Alt + P unlocked */
+    .admin-only { display: none; }
+    body.admin-unlocked .admin-only { display: inline-flex; }
+
     .srch {
       margin-left: auto;
       background: var(--panel);
@@ -161,10 +165,11 @@
       border-radius: 999px;
     }
     .del {
+      display: none;
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(15, 23, 42, 0.8);
+      background: rgba(15, 23, 42, 0.85);
       color: #f87171;
       border: 1px solid rgba(248, 113, 113, 0.35);
       border-radius: 999px;
@@ -172,6 +177,8 @@
       font-size: 0.75rem;
       cursor: pointer;
     }
+    body.admin-unlocked .del { display: inline-block; }
+
     .strip {
       padding: 12px 14px;
       display: flex;
@@ -227,6 +234,7 @@
     }
     .mode-btn.active { background: var(--acc); border-color: var(--acc); color: #fff; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .err-msg { color: #f87171; font-size: 0.85rem; margin-top: 6px; display: none; }
 
     /* Player */
     .player {
@@ -253,9 +261,10 @@
   <div class="glow"></div>
   <div class="wrap">
     <header class="top">
-      <button class="brand" onclick="resetView()">⚡ Hub</button>
-      <button class="btn pri" onclick="openAddModal()">+ Voeg toe (Link / HTML)</button>
-      <button class="btn" onclick="resetCustomItems()">Reset opgeslagen</button>
+      <button class="brand" onclick="resetView()">⚡ IrfanGames</button>
+      <button class="btn pri admin-only" onclick="openAddModal()">+ Voeg toe (Link / HTML)</button>
+      <button class="btn admin-only" onclick="resetCustomItems()">Reset opgeslagen</button>
+      <button class="btn admin-only" onclick="lockAdmin()">🔒 Vergrendel</button>
       <label class="srch">
         <input type="search" id="search" placeholder="Zoek game of app..." oninput="render()">
       </label>
@@ -263,9 +272,9 @@
 
     <section class="hero">
       <div>
-        <small>Jouw eigen GitHub Hub</small>
+        <small>IrfanGames Hub</small>
         <h1 id="heroTitle">Youtube ad skipper</h1>
-        <p id="heroDesc">Voeg games en apps toe via een directe link of plak direct je eigen HTML-code.</p>
+        <p id="heroDesc">Speel games en gebruik handige web-apps direct in je browser.</p>
         <button class="btn pri" id="heroPlayBtn">▶ Openen</button>
       </div>
     </section>
@@ -278,6 +287,24 @@
 
     <h2 id="heading">Alles <small id="count"></small></h2>
     <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- Admin Unlock Modal (Alt + P) -->
+  <div class="overlay" id="authModal">
+    <div class="dialog" style="max-width: 380px;">
+      <h3>Admin Toegang</h3>
+      <form onsubmit="checkAdminCode(event)">
+        <div class="field">
+          <label for="adminCodeInput">Voer de geheime code in</label>
+          <input type="password" id="adminCodeInput" placeholder="Code..." autocomplete="off">
+          <div class="err-msg" id="authErr">Verkeerde code. Probeer opnieuw.</div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" onclick="closeAuthModal()">Annuleren</button>
+          <button type="submit" class="btn pri">Ontgrendelen</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Add Item Modal -->
@@ -298,14 +325,14 @@
       <div class="field">
         <label for="itemCat">Categorie</label>
         <select id="itemCat">
-          <option value="apps">Apps</option>
           <option value="games">Games</option>
+          <option value="apps">Apps</option>
         </select>
       </div>
 
       <div class="field">
         <label for="itemIcon">Emoji of Cover-afbeelding URL</label>
-        <input type="text" id="itemIcon" placeholder="🚀 of https://...">
+        <input type="text" id="itemIcon" placeholder="🎮 of https://...">
       </div>
 
       <div class="field" id="linkField">
@@ -315,7 +342,7 @@
 
       <div class="field" id="htmlField" style="display:none;">
         <label for="itemHtml">Plak hier je HTML-code</label>
-        <textarea id="itemHtml" placeholder="<!DOCTYPE html><html><body><h1>Mijn App</h1></body></html>"></textarea>
+        <textarea id="itemHtml" placeholder="<!DOCTYPE html><html><body><h1>Mijn Game</h1></body></html>"></textarea>
       </div>
 
       <div class="dialog-actions">
@@ -335,9 +362,10 @@
   </div>
 
   <script>
+    const ADMIN_CODE = "irfan";
     const STORAGE_KEY = "custom_hub_items_v1";
+    let isAdmin = false;
 
-    // Standaard items in je GitHub-code (pas dit aan wanneer je wilt)
     const DEFAULT_ITEMS = [
       {
         id: "def-1",
@@ -352,6 +380,48 @@
     let customItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     let currentTab = "all";
     let addMode = "link";
+
+    // Shortcut Alt + P
+    document.addEventListener("keydown", (e) => {
+      if (e.altKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        if (isAdmin) {
+          lockAdmin();
+        } else {
+          openAuthModal();
+        }
+      }
+    });
+
+    function openAuthModal() {
+      document.getElementById("authErr").style.display = "none";
+      const input = document.getElementById("adminCodeInput");
+      input.value = "";
+      document.getElementById("authModal").classList.add("open");
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.remove("open");
+    }
+
+    function checkAdminCode(e) {
+      e.preventDefault();
+      const val = document.getElementById("adminCodeInput").value.trim();
+      if (val === ADMIN_CODE) {
+        isAdmin = true;
+        document.body.classList.add("admin-unlocked");
+        closeAuthModal();
+      } else {
+        document.getElementById("authErr").style.display = "block";
+      }
+    }
+
+    function lockAdmin() {
+      isAdmin = false;
+      document.body.classList.remove("admin-unlocked");
+      closeAddModal();
+    }
 
     function getAllItems() {
       return [...customItems, ...DEFAULT_ITEMS];
@@ -370,6 +440,7 @@
     }
 
     function openAddModal() {
+      if (!isAdmin) return openAuthModal();
       document.getElementById("addModal").classList.add("open");
     }
 
@@ -386,6 +457,7 @@
     }
 
     function saveItem() {
+      if (!isAdmin) return;
       const title = document.getElementById("itemTitle").value.trim();
       const category = document.getElementById("itemCat").value;
       const icon = document.getElementById("itemIcon").value.trim() || (category === "games" ? "🎮" : "⚡");
@@ -416,12 +488,14 @@
 
     function deleteCustom(e, id) {
       e.stopPropagation();
+      if (!isAdmin) return;
       customItems = customItems.filter(item => item.id !== id);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
       render();
     }
 
     function resetCustomItems() {
+      if (!isAdmin) return;
       customItems = [];
       localStorage.removeItem(STORAGE_KEY);
       render();
