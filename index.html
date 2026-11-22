@@ -203,7 +203,7 @@
     }
 
     /* Tabs */
-    .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
     .tab {
       background: var(--panel);
       color: #cbd5e1;
@@ -215,14 +215,19 @@
     }
     .tab.on { background: var(--acc); border-color: var(--acc); color: #fff; }
 
-    /* Grid */
+    /* Sections & Grid */
+    .section-block { margin-bottom: 34px; }
     h2 { font-size: 1.25rem; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
     h2 small { color: var(--muted); font-size: 0.85rem; font-weight: 500; }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
-      margin-bottom: 40px;
+    }
+    .empty-note {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 14px 0;
     }
     .tile {
       position: relative;
@@ -476,14 +481,13 @@
     </section>
 
     <div class="tabs">
-      <button class="tab on" id="t-all" onclick="setTab('all')">Alles</button>
-      <button class="tab" id="t-games" onclick="setTab('games')">Games</button>
-      <button class="tab" id="t-apps" onclick="setTab('apps')">Apps</button>
+      <button class="tab on" id="t-sections" onclick="setTab('sections')">Games & Apps</button>
+      <button class="tab" id="t-games" onclick="setTab('games')">Alleen Games</button>
+      <button class="tab" id="t-apps" onclick="setTab('apps')">Alleen Apps</button>
       <button class="tab" id="t-fav" onclick="setTab('fav')">♥ Favorieten</button>
     </div>
 
-    <h2 id="heading">Alles <small id="count"></small></h2>
-    <div class="grid" id="grid"></div>
+    <div id="contentArea"></div>
   </div>
 
   <!-- Admin Unlock Modal -->
@@ -639,12 +643,11 @@
     const BANNER_KEY = "irfanhub_banner_v1";
     const ACCENT_KEY = "irfanhub_accent_v1";
 
-    // Geen zelfgemaakte games hier; voeg je eigen items toe via + Toevoegen
     const DEFAULT_ITEMS = [];
 
     let isAdmin = false;
     let addMode = "link";
-    let currentTab = "all";
+    let currentTab = "sections";
     let uploadedImageData = "";
     let typedBuffer = "";
     let customItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -886,7 +889,7 @@
 
     function resetView() {
       document.getElementById("search").value = "";
-      setTab("all");
+      setTab("sections");
     }
 
     function setMode(mode) {
@@ -902,156 +905,4 @@
       const title = document.getElementById("itemTitle").value.trim();
       const category = document.getElementById("itemCat").value;
       const typedIcon = document.getElementById("itemIcon").value.trim();
-      const icon = uploadedImageData || typedIcon || (category === "games" ? "🎮" : "⚡");
-      const url = document.getElementById("itemUrl").value.trim();
-      const html = document.getElementById("itemHtml").value;
-
-      if (!title) return alert("Vul eerst een naam in.");
-      if (addMode === "link" && !url) return alert("Vul een geldige link in.");
-      if (addMode === "html" && !html.trim()) return alert("Plak eerst je HTML-code.");
-
-      customItems.unshift({
-        id: "c-" + Date.now(),
-        title,
-        category,
-        icon,
-        type: addMode,
-        url,
-        html
-      });
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
-      document.getElementById("itemTitle").value = "";
-      document.getElementById("itemIcon").value = "";
-      document.getElementById("itemFile").value = "";
-      document.getElementById("itemUrl").value = "";
-      document.getElementById("itemHtml").value = "";
-      uploadedImageData = "";
-      closePanel();
-      render();
-    }
-
-    function deleteCustom(e, id) {
-      e.stopPropagation();
-      if (!isAdmin) return;
-      customItems = customItems.filter(item => item.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
-      render();
-    }
-
-    function resetCustomItems() {
-      if (!isAdmin) return;
-      customItems = [];
-      localStorage.removeItem(STORAGE_KEY);
-      render();
-    }
-
-    function launchItem(item) {
-      document.getElementById("playerTitle").textContent = item.title;
-      const frame = document.getElementById("frame");
-      if (item.type === "html") {
-        frame.removeAttribute("src");
-        frame.srcdoc = item.html;
-      } else {
-        frame.removeAttribute("srcdoc");
-        frame.src = item.url;
-      }
-      document.getElementById("player").classList.add("open");
-    }
-
-    function closePlayer() {
-      document.getElementById("player").classList.remove("open");
-      document.getElementById("frame").removeAttribute("src");
-      document.getElementById("frame").removeAttribute("srcdoc");
-    }
-
-    function render() {
-      const q = document.getElementById("search").value.toLowerCase();
-      const all = getAllItems();
-
-      const gotd = getGameOfTheDay(all);
-      const favBtn = document.getElementById("heroFavBtn");
-      const playBtn = document.getElementById("heroPlayBtn");
-      const prev = document.getElementById("heroPreview");
-
-      if (gotd) {
-        document.getElementById("heroTitle").textContent = gotd.title;
-        playBtn.disabled = false;
-        playBtn.style.opacity = "1";
-        playBtn.onclick = () => launchItem(gotd);
-        favBtn.style.display = "inline-flex";
-        favBtn.classList.toggle("liked", favorites.includes(gotd.id));
-        favBtn.onclick = (e) => toggleFavorite(gotd.id, e);
-
-        const isImg = gotd.icon.startsWith("http") || gotd.icon.startsWith("data:image/");
-        if (isImg) {
-          prev.style.backgroundImage = `url('${gotd.icon}')`;
-          prev.textContent = "";
-        } else {
-          prev.style.backgroundImage = "";
-          prev.textContent = gotd.icon;
-        }
-        prev.onclick = () => launchItem(gotd);
-      } else {
-        document.getElementById("heroTitle").textContent = "Nog geen game toegevoegd";
-        playBtn.disabled = true;
-        playBtn.style.opacity = "0.55";
-        playBtn.onclick = null;
-        favBtn.style.display = "none";
-        prev.style.backgroundImage = "";
-        prev.textContent = "🎮";
-        prev.onclick = null;
-      }
-
-      const filtered = all.filter(item => {
-        const matchTab =
-          currentTab === "all" ||
-          (currentTab === "fav" ? favorites.includes(item.id) : item.category === currentTab);
-        const matchSearch = item.title.toLowerCase().includes(q);
-        return matchTab && matchSearch;
-      });
-
-      const labels = { all: "Alles", games: "Games", apps: "Apps", fav: "Favorieten" };
-      document.getElementById("heading").innerHTML =
-        `${labels[currentTab]} <small>${filtered.length} items</small>`;
-
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-
-      filtered.forEach(item => {
-        const isImage = item.icon.startsWith("http") || item.icon.startsWith("data:image/");
-        const isLiked = favorites.includes(item.id);
-        const tile = document.createElement("div");
-        tile.className = "tile";
-        tile.onclick = () => launchItem(item);
-        tile.innerHTML = `
-          <span class="badge">${item.type === "html" ? "HTML" : "LINK"}</span>
-          ${item.id.startsWith("c-") ? `<button class="del" title="Verwijder">✕</button>` : ""}
-          <button class="tile-fav ${isLiked ? "liked" : ""}" title="Favoriet">♥</button>
-          <div class="thumb" style="${isImage ? `background-image:url('${item.icon}')` : ""}">
-            ${isImage ? "" : item.icon}
-          </div>
-          <div class="strip">
-            <span>${item.title}</span>
-            <span>▶</span>
-          </div>
-        `;
-        const delBtn = tile.querySelector(".del");
-        if (delBtn) delBtn.onclick = (e) => deleteCustom(e, item.id);
-        tile.querySelector(".tile-fav").onclick = (e) => toggleFavorite(item.id, e);
-        grid.appendChild(tile);
-      });
-    }
-
-    const savedAccent = localStorage.getItem(ACCENT_KEY);
-    if (savedAccent) {
-      document.documentElement.style.setProperty("--acc", savedAccent);
-      document.getElementById("accentPicker").value = savedAccent;
-    }
-    renderBanner();
-    render();
-    checkLockout();
-    setInterval(checkLockout, 1000);
-  </script>
-</body>
-</html>
+      const icon = uploadedImageData || typedIcon || (category === "games" ? "🎮"
