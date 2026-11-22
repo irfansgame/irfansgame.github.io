@@ -122,4 +122,151 @@
       align-items: flex-start;
       z-index: 1;
     }
-    .gotd-label
+    .gotd-label {
+      color: #93c5fd;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .gotd-title {
+      font-size: clamp(1.85rem, 3.6vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 22px;
+      color: #fff;
+    }
+    .gotd-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gotd-play {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--acc);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 26px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(31, 111, 229, 0.45);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .gotd-play:hover { transform: translateY(-1px); filter: brightness(1.12); }
+    .gotd-fav {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .gotd-fav:hover { background: rgba(255, 255, 255, 0.2); }
+    .gotd-fav.liked {
+      background: rgba(244, 63, 94, 0.22);
+      border-color: #fb7185;
+      color: #fb7185;
+    }
+    .gotd-preview {
+      width: 340px;
+      max-width: 44%;
+      height: 185px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4.2rem;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.18s ease;
+    }
+    .gotd-preview:hover { transform: scale(1.02); }
+    @media (max-width: 700px) {
+      .gotd-hero { flex-direction: column; align-items: stretch; padding: 22px; }
+      .gotd-preview { width: 100%; max-width: 100%; height: 170px; }
+    }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab {
+      background: var(--panel);
+      color: #cbd5e1;
+      border: 1px solid var(--border);
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+
+    /* Grid */
+    h2 { font-size: 1.25rem; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    h2 small { color: var(--muted); font-size: 0.85rem; font-weight: 500; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .tile {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .tile:hover {
+      transform: translateY(-4px);
+      border-color: var(--acc);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    }
+    .thumb {
+      height: 132px;
+      background: linear-gradient(135deg, #0f1f3d, #182e59);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.3rem;
+      background-size: cover;
+      background-position: center;
+    }
+    .badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: var(--acc);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .tile-fav {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #cbd5e1;
+      font-size:
