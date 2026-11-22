@@ -1,22 +1,270 @@
-<button type="button" id="downloadBtn">Download Data</button>
+<!DOCTYPE html>
+<html lang="nl" style="--acc: #1f6fe5;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IrfanGames Hub</title>
+  <link rel="icon" type="image/png" href="logo.png">
+  <style>
+    :root {
+      --bg: #04070f;
+      --panel: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.12);
+      --acc: #1f6fe5;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body {
+      background: var(--bg);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+    .glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(31, 111, 229, 0.25), transparent 42%),
+        radial-gradient(circle at 88% 20%, rgba(56, 189, 248, 0.12), transparent 38%),
+        radial-gradient(circle at 50% 95%, rgba(31, 111, 229, 0.16), transparent 45%);
+    }
+    .wrap { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; }
 
-<script>
-  function downloadFile(filename, textContent) {
-    const blob = new Blob([textContent], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+    .announcement {
+      display: none;
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: rgba(31, 111, 229, 0.2);
+      border: 1px solid var(--acc);
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+    .announcement.show { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
+    header.top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 16px;
+      padding: 7px 15px 7px 9px;
+      font-size: 1.08rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(31, 111, 229, 0.25);
+      user-select: none;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    .brand:hover { transform: translateY(-1px); border-color: var(--acc); }
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      object-fit: contain;
+      background: #fff;
+      padding: 2px;
+      display: block;
+    }
+    .btn {
+      background: var(--panel);
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn:hover { border-color: var(--acc); background: rgba(31, 111, 229, 0.18); }
+    .btn.pri { background: var(--acc); border-color: var(--acc); }
+    .btn.pri:hover { filter: brightness(1.12); }
+    .btn.danger { background: rgba(239, 68, 68, 0.18); border-color: rgba(248, 113, 113, 0.45); color: #fca5a5; }
 
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
+    .admin-only { display: none; }
+    body.admin-unlocked .admin-only { display: inline-flex; }
 
-  document.getElementById("downloadBtn")?.addEventListener("click", () => {
-    const sampleData = JSON.stringify({ exportedAt: new Date().toISOString() }, null, 2);
-    downloadFile("export.json", sampleData);
-  });
-</script>
+    .srch {
+      margin-left: auto;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+    }
+    .srch input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      outline: none;
+      width: 190px;
+    }
+
+    /* Game van de dag Hero Card */
+    .gotd-hero {
+      position: relative;
+      border-radius: 26px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      background:
+        radial-gradient(circle at 18% 35%, rgba(20, 120, 155, 0.38), transparent 52%),
+        radial-gradient(circle at 60% 25%, rgba(124, 58, 237, 0.24), transparent 50%),
+        linear-gradient(125deg, #0d2633 0%, #16182c 52%, #0c1324 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      overflow: hidden;
+    }
+    .gotd-left {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 1;
+    }
+    .gotd-label {
+      color: #93c5fd;
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .gotd-title {
+      font-size: clamp(1.85rem, 3.6vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 22px;
+      color: #fff;
+    }
+    .gotd-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .gotd-play {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--acc);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 26px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(31, 111, 229, 0.45);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .gotd-play:hover { transform: translateY(-1px); filter: brightness(1.12); }
+    .gotd-fav {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 1.15rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .gotd-fav:hover { background: rgba(255, 255, 255, 0.2); }
+    .gotd-fav.liked {
+      background: rgba(244, 63, 94, 0.22);
+      border-color: #fb7185;
+      color: #fb7185;
+    }
+    .gotd-preview {
+      width: 340px;
+      max-width: 44%;
+      height: 185px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4.2rem;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.18s ease;
+    }
+    .gotd-preview:hover { transform: scale(1.02); }
+    @media (max-width: 700px) {
+      .gotd-hero { flex-direction: column; align-items: stretch; padding: 22px; }
+      .gotd-preview { width: 100%; max-width: 100%; height: 170px; }
+    }
+
+    /* Sections & Grid */
+    .section-block { margin-bottom: 34px; }
+    h2 { font-size: 1.25rem; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+    h2 small { color: var(--muted); font-size: 0.85rem; font-weight: 500; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .empty-note {
+      color: var(--muted);
+      font-size: 0.9rem;
+      padding: 14px 0;
+    }
+    .tile {
+      position: relative;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+    .tile:hover {
+      transform: translateY(-4px);
+      border-color: var(--acc);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    }
+    .thumb {
+      height: 132px;
+      background: linear-gradient(135deg, #0f1f3d, #182e59);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.3rem;
+      background-size: cover;
+      background-position: center;
+    }
+    .badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: var(--acc);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+    .tile-fav {
+      position: absolute;
