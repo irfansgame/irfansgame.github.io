@@ -61,6 +61,7 @@
       font-weight: 800;
       cursor: pointer;
       box-shadow: 0 8px 24px rgba(31, 111, 229, 0.35);
+      user-select: none;
     }
     .btn {
       background: var(--panel);
@@ -336,7 +337,7 @@
     </div>
 
     <header class="top">
-      <button class="brand" onclick="resetView()">⚡ IrfanGames</button>
+      <button class="brand" onclick="resetView()" ondblclick="openAuthModal()" title="Dubbelklik voor code-login">⚡ IrfanGames</button>
       <button class="btn pri admin-only" onclick="openPanel('add')">+ Toevoegen</button>
       <button class="btn admin-only" onclick="openPanel('mensen')">🛡️ Mensen & Straf</button>
       <button class="btn admin-only" onclick="openPanel('stijl')">🎨 Banner & Stijl</button>
@@ -365,7 +366,7 @@
     <div class="grid" id="grid"></div>
   </div>
 
-  <!-- Admin Unlock Modal (Alt + P) -->
+  <!-- Admin Unlock Modal -->
   <div class="overlay" id="authModal">
     <div class="dialog" style="max-width: 380px;">
       <h3>Admin Toegang</h3>
@@ -513,6 +514,7 @@
     let addMode = "link";
     let currentTab = "all";
     let uploadedImageData = "";
+    let typedBuffer = "";
 
     const DEFAULT_ITEMS = [
       {
@@ -528,11 +530,24 @@
     let customItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     let bans = JSON.parse(localStorage.getItem(BAN_KEY) || "[]");
 
+    // Alt + P shortcut + secret word "irfan" backup trigger
     document.addEventListener("keydown", (e) => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
       if (e.altKey && e.key.toLowerCase() === "p") {
         e.preventDefault();
         if (isAdmin) lockAdmin();
         else openAuthModal();
+        return;
+      }
+
+      if (!inInput && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+        typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-6);
+        if (typedBuffer.endsWith("irfan")) {
+          typedBuffer = "";
+          if (!isAdmin) openAuthModal();
+        }
       }
     });
 
@@ -656,3 +671,191 @@
         screen.classList.remove("active");
         return;
       }
+      const until = Number(localStorage.getItem(PUNISH_KEY) || 0);
+      const now = Date.now();
+      if (until > now) {
+        const secsLeft = Math.ceil((until - now) / 1000);
+        const mins = Math.floor(secsLeft / 60);
+        const secs = secsLeft % 60;
+        document.getElementById("lockTitle").textContent = "Groepsstraf actief";
+        document.getElementById("lockReason").textContent = localStorage.getItem(PUNISH_REASON_KEY) || "Tijdelijke pauze ingesteld.";
+        document.getElementById("lockTimer").textContent = `Resterende tijd: ${mins}m ${secs}s`;
+        screen.classList.add("active");
+      } else {
+        screen.classList.remove("active");
+      }
+    }
+
+    function setBanner() {
+      if (!isAdmin) return;
+      const txt = document.getElementById("bannerInput").value.trim();
+      localStorage.setItem(BANNER_KEY, txt);
+      renderBanner();
+    }
+
+    function clearBanner() {
+      localStorage.removeItem(BANNER_KEY);
+      renderBanner();
+    }
+
+    function renderBanner() {
+      const txt = localStorage.getItem(BANNER_KEY) || "";
+      const box = document.getElementById("bannerBox");
+      document.getElementById("bannerText").textContent = txt;
+      box.classList.toggle("show", Boolean(txt));
+    }
+
+    function applyAccent() {
+      if (!isAdmin) return;
+      const col = document.getElementById("accentPicker").value;
+      document.documentElement.style.setProperty("--acc", col);
+      localStorage.setItem(ACCENT_KEY, col);
+    }
+
+    function getAllItems() {
+      return [...customItems, ...DEFAULT_ITEMS];
+    }
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
+      document.getElementById("t-" + tab).classList.add("on");
+      render();
+    }
+
+    function resetView() {
+      document.getElementById("search").value = "";
+      setTab("all");
+    }
+
+    function setMode(mode) {
+      addMode = mode;
+      document.getElementById("modeLinkBtn").classList.toggle("active", mode === "link");
+      document.getElementById("modeHtmlBtn").classList.toggle("active", mode === "html");
+      document.getElementById("linkField").style.display = mode === "link" ? "block" : "none";
+      document.getElementById("htmlField").style.display = mode === "html" ? "block" : "none";
+    }
+
+    function saveItem() {
+      if (!isAdmin) return;
+      const title = document.getElementById("itemTitle").value.trim();
+      const category = document.getElementById("itemCat").value;
+      const typedIcon = document.getElementById("itemIcon").value.trim();
+      const icon = uploadedImageData || typedIcon || (category === "games" ? "🎮" : "⚡");
+      const url = document.getElementById("itemUrl").value.trim();
+      const html = document.getElementById("itemHtml").value;
+
+      if (!title) return alert("Vul eerst een naam in.");
+      if (addMode === "link" && !url) return alert("Vul een geldige link in.");
+      if (addMode === "html" && !html.trim()) return alert("Plak eerst je HTML-code.");
+
+      customItems.unshift({
+        id: "c-" + Date.now(),
+        title,
+        category,
+        icon,
+        type: addMode,
+        url,
+        html
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+      document.getElementById("itemTitle").value = "";
+      document.getElementById("itemIcon").value = "";
+      document.getElementById("itemFile").value = "";
+      document.getElementById("itemUrl").value = "";
+      document.getElementById("itemHtml").value = "";
+      uploadedImageData = "";
+      closePanel();
+      render();
+    }
+
+    function deleteCustom(e, id) {
+      e.stopPropagation();
+      if (!isAdmin) return;
+      customItems = customItems.filter(item => item.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+      render();
+    }
+
+    function resetCustomItems() {
+      if (!isAdmin) return;
+      customItems = [];
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    }
+
+    function launchItem(item) {
+      document.getElementById("playerTitle").textContent = item.title;
+      const frame = document.getElementById("frame");
+      if (item.type === "html") {
+        frame.removeAttribute("src");
+        frame.srcdoc = item.html;
+      } else {
+        frame.removeAttribute("srcdoc");
+        frame.src = item.url;
+      }
+      document.getElementById("player").classList.add("open");
+    }
+
+    function closePlayer() {
+      document.getElementById("player").classList.remove("open");
+      document.getElementById("frame").removeAttribute("src");
+      document.getElementById("frame").removeAttribute("srcdoc");
+    }
+
+    function render() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const all = getAllItems();
+      const filtered = all.filter(item => {
+        const matchTab = currentTab === "all" || item.category === currentTab;
+        const matchSearch = item.title.toLowerCase().includes(q);
+        return matchTab && matchSearch;
+      });
+
+      const labels = { all: "Alles", games: "Games", apps: "Apps" };
+      document.getElementById("heading").innerHTML =
+        `${labels[currentTab]} <small>${filtered.length} items</small>`;
+
+      if (all[0]) {
+        document.getElementById("heroTitle").textContent = all[0].title;
+        document.getElementById("heroPlayBtn").onclick = () => launchItem(all[0]);
+      }
+
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+
+      filtered.forEach(item => {
+        const isImage = item.icon.startsWith("http") || item.icon.startsWith("data:image/");
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.onclick = () => launchItem(item);
+        tile.innerHTML = `
+          <span class="badge">${item.type === "html" ? "HTML" : "LINK"}</span>
+          ${item.id.startsWith("c-") ? `<button class="del" title="Verwijder">✕</button>` : ""}
+          <div class="thumb" style="${isImage ? `background-image:url('${item.icon}')` : ""}">
+            ${isImage ? "" : item.icon}
+          </div>
+          <div class="strip">
+            <span>${item.title}</span>
+            <span>▶</span>
+          </div>
+        `;
+        const delBtn = tile.querySelector(".del");
+        if (delBtn) delBtn.onclick = (e) => deleteCustom(e, item.id);
+        grid.appendChild(tile);
+      });
+    }
+
+    const savedAccent = localStorage.getItem(ACCENT_KEY);
+    if (savedAccent) {
+      document.documentElement.style.setProperty("--acc", savedAccent);
+      document.getElementById("accentPicker").value = savedAccent;
+    }
+    renderBanner();
+    render();
+    checkLockout();
+    setInterval(checkLockout, 1000);
+  </script>
+</body>
+</html>
