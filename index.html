@@ -32,6 +32,19 @@
     }
     .wrap { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; }
 
+    /* Optional Announcement Banner */
+    .announcement {
+      display: none;
+      margin-bottom: 18px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: rgba(31, 111, 229, 0.2);
+      border: 1px solid var(--acc);
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+    .announcement.show { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
     /* Top bar */
     header.top {
       display: flex;
@@ -41,7 +54,7 @@
       margin-bottom: 24px;
     }
     .brand {
-      background: linear-gradient(135deg, #1f6fe5, #0ea5e9);
+      background: linear-gradient(135deg, var(--acc), #0ea5e9);
       color: #fff;
       border: none;
       border-radius: 14px;
@@ -62,13 +75,10 @@
       transition: 0.15s;
     }
     .btn:hover { border-color: var(--acc); background: rgba(31, 111, 229, 0.18); }
-    .btn.pri {
-      background: var(--acc);
-      border-color: var(--acc);
-    }
+    .btn.pri { background: var(--acc); border-color: var(--acc); }
     .btn.pri:hover { filter: brightness(1.12); }
+    .btn.danger { background: rgba(239, 68, 68, 0.18); border-color: rgba(248, 113, 113, 0.45); color: #fca5a5; }
 
-    /* Admin controls hidden until Alt + P unlocked */
     .admin-only { display: none; }
     body.admin-unlocked .admin-only { display: inline-flex; }
 
@@ -207,6 +217,8 @@
       border: 1px solid var(--border);
       border-radius: 20px;
       padding: 22px;
+      max-height: 90vh;
+      overflow-y: auto;
     }
     .dialog h3 { margin-bottom: 14px; }
     .field { margin-bottom: 14px; }
@@ -220,10 +232,11 @@
       padding: 10px 12px;
       outline: none;
     }
-    .field textarea { min-height: 150px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
-    .mode-switch { display: flex; gap: 8px; margin-bottom: 14px; }
+    .field textarea { min-height: 130px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+    .mode-switch { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
     .mode-btn {
       flex: 1;
+      min-width: 90px;
       padding: 9px;
       border-radius: 10px;
       border: 1px solid var(--border);
@@ -233,8 +246,52 @@
       cursor: pointer;
     }
     .mode-btn.active { background: var(--acc); border-color: var(--acc); color: #fff; }
-    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
     .err-msg { color: #f87171; font-size: 0.85rem; margin-top: 6px; display: none; }
+
+    .box-card {
+      background: #050914;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .box-card h4 { margin-bottom: 8px; font-size: 0.95rem; }
+    .inline-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .inline-row input { flex: 1; min-width: 120px; }
+    .ban-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .ban-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.88rem;
+    }
+
+    /* Lockout screen for punished/banned browser */
+    .lockout {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: #04070f;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .lockout.active { display: flex; }
+    .lockout-box {
+      max-width: 460px;
+      background: #0b1222;
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      border-radius: 20px;
+      padding: 28px;
+    }
+    .lockout-box h2 { justify-content: center; color: #f87171; margin-bottom: 10px; }
+    .lockout-box p { color: #cbd5e1; margin-bottom: 14px; }
 
     /* Player */
     .player {
@@ -259,11 +316,27 @@
 </head>
 <body>
   <div class="glow"></div>
+
+  <!-- Lockout Screen (Ban / Groepsstraf) -->
+  <div class="lockout" id="lockoutScreen">
+    <div class="lockout-box">
+      <h2 id="lockTitle">Toegang geblokkeerd</h2>
+      <p id="lockReason">Je hebt tijdelijk geen toegang tot deze hub.</p>
+      <p id="lockTimer" style="color:#7dd3fc;font-weight:700;"></p>
+    </div>
+  </div>
+
   <div class="wrap">
+    <div class="announcement" id="bannerBox">
+      <span id="bannerText"></span>
+      <button class="btn" onclick="clearBanner()">✕</button>
+    </div>
+
     <header class="top">
       <button class="brand" onclick="resetView()">⚡ IrfanGames</button>
-      <button class="btn pri admin-only" onclick="openAddModal()">+ Voeg toe (Link / HTML)</button>
-      <button class="btn admin-only" onclick="resetCustomItems()">Reset opgeslagen</button>
+      <button class="btn pri admin-only" onclick="openPanel('add')">+ Toevoegen</button>
+      <button class="btn admin-only" onclick="openPanel('mensen')">🛡️ Mensen & Straf</button>
+      <button class="btn admin-only" onclick="openPanel('stijl')">🎨 Banner & Stijl</button>
       <button class="btn admin-only" onclick="lockAdmin()">🔒 Vergrendel</button>
       <label class="srch">
         <input type="search" id="search" placeholder="Zoek game of app..." oninput="render()">
@@ -307,47 +380,99 @@
     </div>
   </div>
 
-  <!-- Add Item Modal -->
-  <div class="overlay" id="addModal">
+  <!-- Admin Control Panel Modal -->
+  <div class="overlay" id="adminPanelModal">
     <div class="dialog">
-      <h3>Game of App toevoegen</h3>
-
+      <h3>Hub Beheer</h3>
       <div class="mode-switch">
-        <button type="button" class="mode-btn active" id="modeLinkBtn" onclick="setMode('link')">Via Link (URL)</button>
-        <button type="button" class="mode-btn" id="modeHtmlBtn" onclick="setMode('html')">Via HTML-code</button>
+        <button type="button" class="mode-btn active" id="pTab-add" onclick="openPanel('add')">+ Game/App</button>
+        <button type="button" class="mode-btn" id="pTab-mensen" onclick="openPanel('mensen')">Mensen & Straf</button>
+        <button type="button" class="mode-btn" id="pTab-stijl" onclick="openPanel('stijl')">Banner & Stijl</button>
       </div>
 
-      <div class="field">
-        <label for="itemTitle">Naam</label>
-        <input type="text" id="itemTitle" placeholder="Bijv. Youtube ad skipper">
+      <!-- Section 1: Add Game / App -->
+      <div id="sec-add">
+        <div class="mode-switch">
+          <button type="button" class="mode-btn active" id="modeLinkBtn" onclick="setMode('link')">Via Link (URL)</button>
+          <button type="button" class="mode-btn" id="modeHtmlBtn" onclick="setMode('html')">Via HTML-code</button>
+        </div>
+        <div class="field">
+          <label for="itemTitle">Naam</label>
+          <input type="text" id="itemTitle" placeholder="Bijv. Capybara Clicker">
+        </div>
+        <div class="field">
+          <label for="itemCat">Categorie</label>
+          <select id="itemCat">
+            <option value="games">Games</option>
+            <option value="apps">Apps</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="itemIcon">Emoji of Cover-afbeelding URL</label>
+          <input type="text" id="itemIcon" placeholder="🎮 of https://...">
+        </div>
+        <div class="field" id="linkField">
+          <label for="itemUrl">Game / App Link (URL)</label>
+          <input type="url" id="itemUrl" placeholder="https://voorbeeld.nl/game">
+        </div>
+        <div class="field" id="htmlField" style="display:none;">
+          <label for="itemHtml">Plak hier je HTML-code</label>
+          <textarea id="itemHtml" placeholder="<!DOCTYPE html><html><body><h1>Mijn Game</h1></body></html>"></textarea>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn danger" onclick="resetCustomItems()">Reset opgeslagen items</button>
+          <button type="button" class="btn pri" onclick="saveItem()">Opslaan</button>
+        </div>
       </div>
 
-      <div class="field">
-        <label for="itemCat">Categorie</label>
-        <select id="itemCat">
-          <option value="games">Games</option>
-          <option value="apps">Apps</option>
-        </select>
+      <!-- Section 2: Mensen, Ban-overzicht & Groepsstraf -->
+      <div id="sec-mensen" style="display:none;">
+        <div class="box-card">
+          <h4>Ban-overzicht</h4>
+          <div class="inline-row">
+            <input type="text" id="banInput" placeholder="Naam of ID om te blokkeren...">
+            <button type="button" class="btn danger" onclick="addBan()">Ban</button>
+          </div>
+          <div class="ban-list" id="banList"></div>
+        </div>
+
+        <div class="box-card">
+          <h4>Antwoorden en groepsstraf</h4>
+          <div class="inline-row" style="margin-bottom:10px;">
+            <span>Eruit voor</span>
+            <input type="number" id="punishMinutes" value="10" min="1" max="1440" style="max-width:85px;">
+            <span>minuten</span>
+          </div>
+          <div class="field" style="margin-bottom:10px;">
+            <input type="text" id="punishReason" placeholder="Reden (mag leeg)">
+          </div>
+          <div class="inline-row">
+            <button type="button" class="btn pri" onclick="startGroupPunishment()">Groepsstraf geven</button>
+            <button type="button" class="btn" onclick="liftGroupPunishment()">Laatste groepsstraf opheffen</button>
+          </div>
+        </div>
       </div>
 
-      <div class="field">
-        <label for="itemIcon">Emoji of Cover-afbeelding URL</label>
-        <input type="text" id="itemIcon" placeholder="🎮 of https://...">
-      </div>
-
-      <div class="field" id="linkField">
-        <label for="itemUrl">Game / App Link (URL)</label>
-        <input type="url" id="itemUrl" placeholder="https://voorbeeld.nl/game">
-      </div>
-
-      <div class="field" id="htmlField" style="display:none;">
-        <label for="itemHtml">Plak hier je HTML-code</label>
-        <textarea id="itemHtml" placeholder="<!DOCTYPE html><html><body><h1>Mijn Game</h1></body></html>"></textarea>
+      <!-- Section 3: Banner & Stijl -->
+      <div id="sec-stijl" style="display:none;">
+        <div class="box-card">
+          <h4>Aankondigingsbanner</h4>
+          <div class="inline-row">
+            <input type="text" id="bannerInput" placeholder="Bijv. Nieuwe games toegevoegd!">
+            <button type="button" class="btn pri" onclick="setBanner()">Toon banner</button>
+          </div>
+        </div>
+        <div class="box-card">
+          <h4>Accentkleur</h4>
+          <div class="inline-row">
+            <input type="color" id="accentPicker" value="#1f6fe5" style="width:64px;height:40px;padding:2px;">
+            <button type="button" class="btn pri" onclick="applyAccent()">Kleur toepassen</button>
+          </div>
+        </div>
       </div>
 
       <div class="dialog-actions">
-        <button type="button" class="btn" onclick="closeAddModal()">Annuleren</button>
-        <button type="button" class="btn pri" onclick="saveItem()">Opslaan</button>
+        <button type="button" class="btn" onclick="closePanel()">Sluiten</button>
       </div>
     </div>
   </div>
@@ -360,212 +485,3 @@
     </div>
     <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
   </div>
-
-  <script>
-    const ADMIN_CODE = "irfan";
-    const STORAGE_KEY = "custom_hub_items_v1";
-    let isAdmin = false;
-
-    const DEFAULT_ITEMS = [
-      {
-        id: "def-1",
-        title: "Youtube ad skipper",
-        category: "apps",
-        icon: "⏭️",
-        type: "html",
-        html: `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#0b1120;color:#fff;padding:24px;"><h2>YouTube Ad Skipper App</h2><p>Jouw HTML-code draait hier direct in de hub.</p></body></html>`
-      }
-    ];
-
-    let customItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-    let currentTab = "all";
-    let addMode = "link";
-
-    // Shortcut Alt + P
-    document.addEventListener("keydown", (e) => {
-      if (e.altKey && e.key.toLowerCase() === "p") {
-        e.preventDefault();
-        if (isAdmin) {
-          lockAdmin();
-        } else {
-          openAuthModal();
-        }
-      }
-    });
-
-    function openAuthModal() {
-      document.getElementById("authErr").style.display = "none";
-      const input = document.getElementById("adminCodeInput");
-      input.value = "";
-      document.getElementById("authModal").classList.add("open");
-      setTimeout(() => input.focus(), 50);
-    }
-
-    function closeAuthModal() {
-      document.getElementById("authModal").classList.remove("open");
-    }
-
-    function checkAdminCode(e) {
-      e.preventDefault();
-      const val = document.getElementById("adminCodeInput").value.trim();
-      if (val === ADMIN_CODE) {
-        isAdmin = true;
-        document.body.classList.add("admin-unlocked");
-        closeAuthModal();
-      } else {
-        document.getElementById("authErr").style.display = "block";
-      }
-    }
-
-    function lockAdmin() {
-      isAdmin = false;
-      document.body.classList.remove("admin-unlocked");
-      closeAddModal();
-    }
-
-    function getAllItems() {
-      return [...customItems, ...DEFAULT_ITEMS];
-    }
-
-    function setTab(tab) {
-      currentTab = tab;
-      document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
-      document.getElementById("t-" + tab).classList.add("on");
-      render();
-    }
-
-    function resetView() {
-      document.getElementById("search").value = "";
-      setTab("all");
-    }
-
-    function openAddModal() {
-      if (!isAdmin) return openAuthModal();
-      document.getElementById("addModal").classList.add("open");
-    }
-
-    function closeAddModal() {
-      document.getElementById("addModal").classList.remove("open");
-    }
-
-    function setMode(mode) {
-      addMode = mode;
-      document.getElementById("modeLinkBtn").classList.toggle("active", mode === "link");
-      document.getElementById("modeHtmlBtn").classList.toggle("active", mode === "html");
-      document.getElementById("linkField").style.display = mode === "link" ? "block" : "none";
-      document.getElementById("htmlField").style.display = mode === "html" ? "block" : "none";
-    }
-
-    function saveItem() {
-      if (!isAdmin) return;
-      const title = document.getElementById("itemTitle").value.trim();
-      const category = document.getElementById("itemCat").value;
-      const icon = document.getElementById("itemIcon").value.trim() || (category === "games" ? "🎮" : "⚡");
-      const url = document.getElementById("itemUrl").value.trim();
-      const html = document.getElementById("itemHtml").value;
-
-      if (!title) return alert("Vul eerst een naam in.");
-      if (addMode === "link" && !url) return alert("Vul een geldige link in.");
-      if (addMode === "html" && !html.trim()) return alert("Plak eerst je HTML-code.");
-
-      customItems.unshift({
-        id: "c-" + Date.now(),
-        title,
-        category,
-        icon,
-        type: addMode,
-        url,
-        html
-      });
-
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
-      document.getElementById("itemTitle").value = "";
-      document.getElementById("itemUrl").value = "";
-      document.getElementById("itemHtml").value = "";
-      closeAddModal();
-      render();
-    }
-
-    function deleteCustom(e, id) {
-      e.stopPropagation();
-      if (!isAdmin) return;
-      customItems = customItems.filter(item => item.id !== id);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
-      render();
-    }
-
-    function resetCustomItems() {
-      if (!isAdmin) return;
-      customItems = [];
-      localStorage.removeItem(STORAGE_KEY);
-      render();
-    }
-
-    function launchItem(item) {
-      document.getElementById("playerTitle").textContent = item.title;
-      const frame = document.getElementById("frame");
-
-      if (item.type === "html") {
-        frame.removeAttribute("src");
-        frame.srcdoc = item.html;
-      } else {
-        frame.removeAttribute("srcdoc");
-        frame.src = item.url;
-      }
-
-      document.getElementById("player").classList.add("open");
-    }
-
-    function closePlayer() {
-      document.getElementById("player").classList.remove("open");
-      document.getElementById("frame").removeAttribute("src");
-      document.getElementById("frame").removeAttribute("srcdoc");
-    }
-
-    function render() {
-      const q = document.getElementById("search").value.toLowerCase();
-      const all = getAllItems();
-      const filtered = all.filter(item => {
-        const matchTab = currentTab === "all" || item.category === currentTab;
-        const matchSearch = item.title.toLowerCase().includes(q);
-        return matchTab && matchSearch;
-      });
-
-      const labels = { all: "Alles", games: "Games", apps: "Apps" };
-      document.getElementById("heading").innerHTML =
-        `${labels[currentTab]} <small>${filtered.length} items</small>`;
-
-      if (all[0]) {
-        document.getElementById("heroTitle").textContent = all[0].title;
-        document.getElementById("heroPlayBtn").onclick = () => launchItem(all[0]);
-      }
-
-      const grid = document.getElementById("grid");
-      grid.innerHTML = "";
-
-      filtered.forEach(item => {
-        const isImage = item.icon.startsWith("http");
-        const tile = document.createElement("div");
-        tile.className = "tile";
-        tile.onclick = () => launchItem(item);
-        tile.innerHTML = `
-          <span class="badge">${item.type === "html" ? "HTML" : "LINK"}</span>
-          ${item.id.startsWith("c-") ? `<button class="del" title="Verwijder">✕</button>` : ""}
-          <div class="thumb" style="${isImage ? `background-image:url('${item.icon}')` : ""}">
-            ${isImage ? "" : item.icon}
-          </div>
-          <div class="strip">
-            <span>${item.title}</span>
-            <span>▶</span>
-          </div>
-        `;
-        const delBtn = tile.querySelector(".del");
-        if (delBtn) delBtn.onclick = (e) => deleteCustom(e, item.id);
-        grid.appendChild(tile);
-      });
-    }
-
-    render();
-  </script>
-</body>
-</html>
