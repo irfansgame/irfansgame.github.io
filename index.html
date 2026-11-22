@@ -543,4 +543,537 @@
           <input type="text" id="itemIcon" placeholder="https://... of 🎮">
         </div>
 
-        <div class="field" id="link
+        <div class="field" id="linkField">
+          <label for="itemUrl">Game / App Link (URL)</label>
+          <input type="url" id="itemUrl" placeholder="https://voorbeeld.nl/game">
+        </div>
+
+        <div class="field" id="htmlField" style="display:none;">
+          <label for="itemHtml">Plak hier je HTML-code</label>
+          <textarea id="itemHtml" placeholder="Plak hier je eigen HTML-code..."></textarea>
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn danger" onclick="resetCustomItems()">Reset opgeslagen</button>
+          <button type="button" class="btn" onclick="closePanel()">Annuleren</button>
+          <button type="button" class="btn pri" onclick="saveItem()">Opslaan</button>
+        </div>
+      </div>
+
+      <!-- Section 2: Mensen, Ban-overzicht & Groepsstraf -->
+      <div id="sec-mensen" style="display:none;">
+        <div class="box-card">
+          <h4>Ban-overzicht</h4>
+          <div class="inline-row">
+            <input type="text" id="banInput" placeholder="Naam of ID om te blokkeren...">
+            <button type="button" class="btn danger" onclick="addBan()">Ban</button>
+          </div>
+          <div class="ban-list" id="banList"></div>
+        </div>
+
+        <div class="box-card">
+          <h4>Antwoorden en groepsstraf</h4>
+          <div class="inline-row" style="margin-bottom:10px;">
+            <span>Eruit voor</span>
+            <input type="number" id="punishMinutes" value="10" min="1" max="1440" style="max-width:85px;">
+            <span>minuten</span>
+          </div>
+          <div class="field" style="margin-bottom:10px;">
+            <input type="text" id="punishReason" placeholder="Reden (mag leeg)">
+          </div>
+          <div class="inline-row">
+            <button type="button" class="btn pri" onclick="startGroupPunishment()">Groepsstraf geven</button>
+            <button type="button" class="btn" onclick="liftGroupPunishment()">Laatste groepsstraf opheffen</button>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" onclick="closePanel()">Sluiten</button>
+        </div>
+      </div>
+
+      <!-- Section 3: Banner & Stijl -->
+      <div id="sec-stijl" style="display:none;">
+        <div class="box-card">
+          <h4>Game van de dag kiezen</h4>
+          <div class="inline-row">
+            <select id="gotdSelect"></select>
+            <button type="button" class="btn pri" onclick="saveGotdChoice()">Instellen</button>
+          </div>
+        </div>
+        <div class="box-card">
+          <h4>Aankondigingsbanner</h4>
+          <div class="inline-row">
+            <input type="text" id="bannerInput" placeholder="Bijv. Nieuwe games toegevoegd!">
+            <button type="button" class="btn pri" onclick="setBanner()">Toon banner</button>
+          </div>
+        </div>
+        <div class="box-card">
+          <h4>Accentkleur</h4>
+          <div class="inline-row">
+            <input type="color" id="accentPicker" value="#1f6fe5" style="width:64px;height:40px;padding:2px;">
+            <button type="button" class="btn pri" onclick="applyAccent()">Kleur toepassen</button>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" onclick="closePanel()">Sluiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player Modal -->
+  <div class="player" id="player">
+    <div class="player-bar">
+      <strong id="playerTitle">Titel</strong>
+      <button class="btn pri" onclick="closePlayer()">✕ Sluiten</button>
+    </div>
+    <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+  </div>
+
+  <script>
+    const ADMIN_CODE = "irfan";
+    const STORAGE_KEY = "custom_hub_items_v1";
+    const FAV_KEY = "irfanhub_favs_v1";
+    const GOTD_KEY = "irfanhub_gotd_v1";
+    const BAN_KEY = "irfanhub_bans_v1";
+    const PUNISH_KEY = "irfanhub_punish_until_v1";
+    const PUNISH_REASON_KEY = "irfanhub_punish_reason_v1";
+    const BANNER_KEY = "irfanhub_banner_v1";
+    const ACCENT_KEY = "irfanhub_accent_v1";
+
+    function readJson(key, fallback) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || "null");
+        return Array.isArray(fallback) ? (Array.isArray(parsed) ? parsed : fallback) : (parsed ?? fallback);
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    const DEFAULT_ITEMS = [];
+
+    let isAdmin = false;
+    let addMode = "link";
+    let uploadedImageData = "";
+    let typedBuffer = "";
+    let customItems = readJson(STORAGE_KEY, []);
+    let favorites = readJson(FAV_KEY, []);
+    let bans = readJson(BAN_KEY, []);
+
+    document.addEventListener("keydown", (e) => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
+      if (e.altKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        if (isAdmin) lockAdmin();
+        else openAuthModal();
+        return;
+      }
+
+      if (!inInput && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+        typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-6);
+        if (typedBuffer.endsWith("irfan")) {
+          typedBuffer = "";
+          if (!isAdmin) openAuthModal();
+        }
+      }
+    });
+
+    function openAuthModal() {
+      document.getElementById("authErr").style.display = "none";
+      const input = document.getElementById("adminCodeInput");
+      input.value = "";
+      document.getElementById("authModal").classList.add("open");
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.remove("open");
+    }
+
+    function checkAdminCode(e) {
+      e.preventDefault();
+      if (document.getElementById("adminCodeInput").value.trim() === ADMIN_CODE) {
+        isAdmin = true;
+        document.body.classList.add("admin-unlocked");
+        closeAuthModal();
+        checkLockout();
+      } else {
+        document.getElementById("authErr").style.display = "block";
+      }
+    }
+
+    function lockAdmin() {
+      isAdmin = false;
+      document.body.classList.remove("admin-unlocked");
+      closePanel();
+      checkLockout();
+    }
+
+    function openPanel(section) {
+      if (!isAdmin) return openAuthModal();
+      document.getElementById("adminPanelModal").classList.add("open");
+      const titles = {
+        add: "Game of App toevoegen",
+        mensen: "Mensen & Straf",
+        stijl: "Banner & Stijl"
+      };
+      document.getElementById("panelHeading").textContent = titles[section] || "Beheer";
+      ["add", "mensen", "stijl"].forEach(s => {
+        document.getElementById("sec-" + s).style.display = s === section ? "block" : "none";
+        document.getElementById("pTab-" + s).classList.toggle("active", s === section);
+      });
+      if (section === "mensen") renderBans();
+      if (section === "stijl") populateGotdSelect();
+    }
+
+    function closePanel() {
+      document.getElementById("adminPanelModal").classList.remove("open");
+    }
+
+    function populateGotdSelect() {
+      const sel = document.getElementById("gotdSelect");
+      const current = localStorage.getItem(GOTD_KEY) || "auto";
+      const all = getAllItems();
+      sel.innerHTML = `<option value="auto">Automatisch (wisselt elke dag)</option>` +
+        all.map(item => `<option value="${item.id}" ${current === item.id ? "selected" : ""}>${item.title}</option>`).join("");
+    }
+
+    function saveGotdChoice() {
+      if (!isAdmin) return;
+      const val = document.getElementById("gotdSelect").value;
+      if (val === "auto") localStorage.removeItem(GOTD_KEY);
+      else localStorage.setItem(GOTD_KEY, val);
+      render();
+    }
+
+    function getGameOfTheDay(all) {
+      const pinnedId = localStorage.getItem(GOTD_KEY);
+      if (pinnedId) {
+        const found = all.find(i => i.id === pinnedId);
+        if (found) return found;
+      }
+      const games = all.filter(i => i.category === "games");
+      const pool = games.length ? games : all;
+      if (!pool.length) return null;
+      const dayNumber = Math.floor(Date.now() / 86400000);
+      return pool[dayNumber % pool.length];
+    }
+
+    function toggleFavorite(id, e) {
+      if (e) e.stopPropagation();
+      if (favorites.includes(id)) {
+        favorites = favorites.filter(f => f !== id);
+      } else {
+        favorites.push(id);
+      }
+      localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
+      render();
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) {
+        uploadedImageData = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImageData = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function addBan() {
+      if (!isAdmin) return;
+      const val = document.getElementById("banInput").value.trim();
+      if (!val) return;
+      if (!bans.includes(val)) {
+        bans.push(val);
+        localStorage.setItem(BAN_KEY, JSON.stringify(bans));
+      }
+      document.getElementById("banInput").value = "";
+      renderBans();
+    }
+
+    function removeBan(name) {
+      if (!isAdmin) return;
+      bans = bans.filter(b => b !== name);
+      localStorage.setItem(BAN_KEY, JSON.stringify(bans));
+      renderBans();
+    }
+
+    function renderBans() {
+      const el = document.getElementById("banList");
+      if (!bans.length) {
+        el.innerHTML = `<div style="color:#94a3b8;font-size:0.85rem;">Geen geblokkeerde personen in de lijst.</div>`;
+        return;
+      }
+      el.innerHTML = bans.map(name => `
+        <div class="ban-item">
+          <span>🚫 ${name}</span>
+          <button type="button" class="btn" style="padding:4px 10px;font-size:0.78rem;" onclick="removeBan('${name.replace(/'/g, "\\'")}')">Verwijder</button>
+        </div>
+      `).join("");
+    }
+
+    function startGroupPunishment() {
+      if (!isAdmin) return;
+      const mins = Math.max(1, parseInt(document.getElementById("punishMinutes").value, 10) || 10);
+      const reason = document.getElementById("punishReason").value.trim() || "Tijdelijke groepsstraf ingesteld door beheerder.";
+      const until = Date.now() + mins * 60 * 1000;
+      localStorage.setItem(PUNISH_KEY, String(until));
+      localStorage.setItem(PUNISH_REASON_KEY, reason);
+      checkLockout();
+    }
+
+    function liftGroupPunishment() {
+      if (!isAdmin) return;
+      localStorage.removeItem(PUNISH_KEY);
+      localStorage.removeItem(PUNISH_REASON_KEY);
+      checkLockout();
+    }
+
+    function checkLockout() {
+      const screen = document.getElementById("lockoutScreen");
+      if (isAdmin) {
+        screen.classList.remove("active");
+        return;
+      }
+      const until = Number(localStorage.getItem(PUNISH_KEY) || 0);
+      const now = Date.now();
+      if (until > now) {
+        const secsLeft = Math.ceil((until - now) / 1000);
+        const mins = Math.floor(secsLeft / 60);
+        const secs = secsLeft % 60;
+        document.getElementById("lockTitle").textContent = "Groepsstraf actief";
+        document.getElementById("lockReason").textContent = localStorage.getItem(PUNISH_REASON_KEY) || "Tijdelijke pauze ingesteld.";
+        document.getElementById("lockTimer").textContent = `Resterende tijd: ${mins}m ${secs}s`;
+        screen.classList.add("active");
+      } else {
+        screen.classList.remove("active");
+      }
+    }
+
+    function setBanner() {
+      if (!isAdmin) return;
+      const txt = document.getElementById("bannerInput").value.trim();
+      localStorage.setItem(BANNER_KEY, txt);
+      renderBanner();
+    }
+
+    function clearBanner() {
+      localStorage.removeItem(BANNER_KEY);
+      renderBanner();
+    }
+
+    function renderBanner() {
+      const txt = localStorage.getItem(BANNER_KEY) || "";
+      const box = document.getElementById("bannerBox");
+      document.getElementById("bannerText").textContent = txt;
+      box.classList.toggle("show", Boolean(txt));
+    }
+
+    function applyAccent() {
+      if (!isAdmin) return;
+      const col = document.getElementById("accentPicker").value;
+      document.documentElement.style.setProperty("--acc", col);
+      localStorage.setItem(ACCENT_KEY, col);
+    }
+
+    function getAllItems() {
+      return [...customItems, ...DEFAULT_ITEMS];
+    }
+
+    function resetView() {
+      document.getElementById("search").value = "";
+      render();
+    }
+
+    function setMode(mode) {
+      addMode = mode;
+      document.getElementById("modeLinkBtn").classList.toggle("active", mode === "link");
+      document.getElementById("modeHtmlBtn").classList.toggle("active", mode === "html");
+      document.getElementById("linkField").style.display = mode === "link" ? "block" : "none";
+      document.getElementById("htmlField").style.display = mode === "html" ? "block" : "none";
+    }
+
+    function saveItem() {
+      if (!isAdmin) return;
+      const title = document.getElementById("itemTitle").value.trim();
+      const category = document.getElementById("itemCat").value;
+      const typedIcon = document.getElementById("itemIcon").value.trim();
+      const icon = uploadedImageData || typedIcon || (category === "games" ? "🎮" : "⚡");
+      const url = document.getElementById("itemUrl").value.trim();
+      const html = document.getElementById("itemHtml").value;
+
+      if (!title) return alert("Vul eerst een naam in.");
+      if (addMode === "link" && !url) return alert("Vul een geldige link in.");
+      if (addMode === "html" && !html.trim()) return alert("Plak eerst je HTML-code.");
+
+      customItems.unshift({
+        id: "c-" + Date.now(),
+        title,
+        category,
+        icon,
+        type: addMode,
+        url,
+        html
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+      document.getElementById("itemTitle").value = "";
+      document.getElementById("itemIcon").value = "";
+      document.getElementById("itemFile").value = "";
+      document.getElementById("itemUrl").value = "";
+      document.getElementById("itemHtml").value = "";
+      uploadedImageData = "";
+      closePanel();
+      render();
+    }
+
+    function deleteCustom(e, id) {
+      e.stopPropagation();
+      if (!isAdmin) return;
+      customItems = customItems.filter(item => item.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+      render();
+    }
+
+    function resetCustomItems() {
+      if (!isAdmin) return;
+      customItems = [];
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    }
+
+    function launchItem(item) {
+      document.getElementById("playerTitle").textContent = item.title;
+      const frame = document.getElementById("frame");
+      if (item.type === "html") {
+        frame.removeAttribute("src");
+        frame.srcdoc = item.html;
+      } else {
+        frame.removeAttribute("srcdoc");
+        frame.src = item.url;
+      }
+      document.getElementById("player").classList.add("open");
+    }
+
+    function closePlayer() {
+      document.getElementById("player").classList.remove("open");
+      document.getElementById("frame").removeAttribute("src");
+      document.getElementById("frame").removeAttribute("srcdoc");
+    }
+
+    function makeTile(item) {
+      const isImage = item.icon.startsWith("http") || item.icon.startsWith("data:image/");
+      const isLiked = favorites.includes(item.id);
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.onclick = () => launchItem(item);
+      tile.innerHTML = `
+        <span class="badge">${item.type === "html" ? "HTML" : "LINK"}</span>
+        ${item.id.startsWith("c-") ? `<button class="del" title="Verwijder">✕</button>` : ""}
+        <button class="tile-fav ${isLiked ? "liked" : ""}" title="Favoriet">♥</button>
+        <div class="thumb" style="${isImage ? `background-image:url('${item.icon}')` : ""}">
+          ${isImage ? "" : item.icon}
+        </div>
+        <div class="strip">
+          <span>${item.title}</span>
+          <span>▶</span>
+        </div>
+      `;
+      const delBtn = tile.querySelector(".del");
+      if (delBtn) delBtn.onclick = (e) => deleteCustom(e, item.id);
+      tile.querySelector(".tile-fav").onclick = (e) => toggleFavorite(item.id, e);
+      return tile;
+    }
+
+    function renderSection(titleText, items, emptyText) {
+      const block = document.createElement("div");
+      block.className = "section-block";
+      const h2 = document.createElement("h2");
+      h2.innerHTML = `${titleText} <small>${items.length} items</small>`;
+      block.appendChild(h2);
+
+      if (!items.length) {
+        const note = document.createElement("div");
+        note.className = "empty-note";
+        note.textContent = emptyText;
+        block.appendChild(note);
+        return block;
+      }
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+      items.forEach(item => grid.appendChild(makeTile(item)));
+      block.appendChild(grid);
+      return block;
+    }
+
+    function render() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const all = getAllItems();
+
+      const gotd = getGameOfTheDay(all);
+      const favBtn = document.getElementById("heroFavBtn");
+      const playBtn = document.getElementById("heroPlayBtn");
+      const prev = document.getElementById("heroPreview");
+
+      if (gotd) {
+        document.getElementById("heroTitle").textContent = gotd.title;
+        playBtn.disabled = false;
+        playBtn.style.opacity = "1";
+        playBtn.onclick = () => launchItem(gotd);
+        favBtn.style.display = "inline-flex";
+        favBtn.classList.toggle("liked", favorites.includes(gotd.id));
+        favBtn.onclick = (e) => toggleFavorite(gotd.id, e);
+
+        const isImg = gotd.icon.startsWith("http") || gotd.icon.startsWith("data:image/");
+        if (isImg) {
+          prev.style.backgroundImage = `url('${gotd.icon}')`;
+          prev.textContent = "";
+        } else {
+          prev.style.backgroundImage = "";
+          prev.textContent = gotd.icon;
+        }
+        prev.onclick = () => launchItem(gotd);
+      } else {
+        document.getElementById("heroTitle").textContent = "Nog geen game toegevoegd";
+        playBtn.disabled = true;
+        playBtn.style.opacity = "0.55";
+        playBtn.onclick = null;
+        favBtn.style.display = "none";
+        prev.style.backgroundImage = "";
+        prev.textContent = "🎮";
+        prev.onclick = null;
+      }
+
+      const searched = all.filter(item => item.title.toLowerCase().includes(q));
+      const games = searched.filter(item => item.category === "games");
+      const apps = searched.filter(item => item.category === "apps");
+      const favs = searched.filter(item => favorites.includes(item.id));
+
+      const area = document.getElementById("contentArea");
+      area.innerHTML = "";
+      if (favs.length) {
+        area.appendChild(renderSection("Favorieten", favs, "Geen favorieten gevonden."));
+      }
+      area.appendChild(renderSection("Games", games, "Nog geen games in deze lijst."));
+      area.appendChild(renderSection("Apps", apps, "Nog geen apps in deze lijst."));
+    }
+
+    const savedAccent = localStorage.getItem(ACCENT_KEY);
+    if (savedAccent) {
+      document.documentElement.style.setProperty("--acc", savedAccent);
+      document.getElementById("accentPicker").value = savedAccent;
+    }
+    renderBanner();
+    render();
+    checkLockout();
+    setInterval(checkLockout, 1000);
+  </script>
+</body>
+</html>
