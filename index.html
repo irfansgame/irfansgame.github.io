@@ -269,4 +269,799 @@
       background: rgba(15, 23, 42, 0.82);
       border: 1px solid rgba(255, 255, 255, 0.16);
       color: #cbd5e1;
-      font-size:
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .tile-fav.liked { color: #fb7185; border-color: rgba(251, 113, 133, 0.5); }
+    .del {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 44px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    body.admin-unlocked .del { display: inline-block; }
+
+    .strip {
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    /* Modals */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(2, 6, 17, 0.85);
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .overlay.open { display: flex; }
+    .dialog {
+      width: 100%;
+      max-width: 560px;
+      background: #0b1222;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .dialog h3 { margin-bottom: 14px; font-size: 1.35rem; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 0.9rem; color: #e2e8f0; margin-bottom: 6px; }
+    .sub-label { display: block; font-size: 0.82rem; color: var(--muted); margin: 8px 0 6px; }
+    .field input[type="text"],
+    .field input[type="url"],
+    .field input[type="number"],
+    .field input[type="password"],
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: #050914;
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+    }
+    .field input[type="file"] {
+      width: 100%;
+      color: #cbd5e1;
+      font-size: 0.88rem;
+      padding: 6px 0;
+    }
+    .field textarea { min-height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.85rem; }
+    .mode-switch { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .mode-btn {
+      flex: 1;
+      min-width: 110px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #050914;
+      color: #cbd5e1;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .mode-btn.active { background: var(--acc); border-color: var(--acc); color: #fff; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .err-msg { color: #f87171; font-size: 0.85rem; margin-top: 6px; display: none; }
+
+    .box-card {
+      background: #050914;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .box-card h4 { margin-bottom: 8px; font-size: 0.95rem; }
+    .inline-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .inline-row input, .inline-row select {
+      flex: 1;
+      min-width: 120px;
+      background: #0b1222;
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 10px;
+      padding: 9px 11px;
+    }
+    .ban-list { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .ban-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.88rem;
+    }
+
+    .lockout {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: #04070f;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .lockout.active { display: flex; }
+    .lockout-box {
+      max-width: 460px;
+      background: #0b1222;
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      border-radius: 20px;
+      padding: 28px;
+    }
+    .lockout-box h2 { justify-content: center; color: #f87171; margin-bottom: 10px; }
+    .lockout-box p { color: #cbd5e1; margin-bottom: 14px; }
+
+    .player {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      background: var(--bg);
+      flex-direction: column;
+    }
+    .player.open { display: flex; }
+    .player-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: #0a1020;
+      border-bottom: 1px solid var(--border);
+    }
+    .player iframe { flex: 1; width: 100%; border: none; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <div class="lockout" id="lockoutScreen">
+    <div class="lockout-box">
+      <h2 id="lockTitle">Toegang geblokkeerd</h2>
+      <p id="lockReason">Je hebt tijdelijk geen toegang tot deze hub.</p>
+      <p id="lockTimer" style="color:#7dd3fc;font-weight:700;"></p>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="announcement" id="bannerBox">
+      <span id="bannerText"></span>
+      <button class="btn" onclick="clearBanner()">✕</button>
+    </div>
+
+    <header class="top">
+      <button class="brand" onclick="resetView()" ondblclick="openAuthModal()" title="Dubbelklik voor code-login">⚡ IrfanGames</button>
+      <button class="btn pri admin-only" onclick="openPanel('add')">+ Toevoegen</button>
+      <button class="btn admin-only" onclick="openPanel('mensen')">🛡️ Mensen & Straf</button>
+      <button class="btn admin-only" onclick="openPanel('stijl')">🎨 Banner & Stijl</button>
+      <button class="btn admin-only" onclick="lockAdmin()">🔒 Vergrendel</button>
+      <label class="srch">
+        <input type="search" id="search" placeholder="Zoek game of app..." oninput="render()">
+      </label>
+    </header>
+
+    <!-- Game van de dag -->
+    <section class="gotd-hero" id="gotdHero">
+      <div class="gotd-left">
+        <span class="gotd-label">GAME VAN DE DAG</span>
+        <h1 class="gotd-title" id="heroTitle">Candy clicker</h1>
+        <div class="gotd-actions">
+          <button class="gotd-play" id="heroPlayBtn">▶ Spelen</button>
+          <button class="gotd-fav" id="heroFavBtn" title="Favoriet">♥</button>
+        </div>
+      </div>
+      <div class="gotd-preview" id="heroPreview">🍬</div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab on" id="t-all" onclick="setTab('all')">Alles</button>
+      <button class="tab" id="t-games" onclick="setTab('games')">Games</button>
+      <button class="tab" id="t-apps" onclick="setTab('apps')">Apps</button>
+      <button class="tab" id="t-fav" onclick="setTab('fav')">♥ Favorieten</button>
+    </div>
+
+    <h2 id="heading">Alles <small id="count"></small></h2>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- Admin Unlock Modal -->
+  <div class="overlay" id="authModal">
+    <div class="dialog" style="max-width: 380px;">
+      <h3>Admin Toegang</h3>
+      <form onsubmit="checkAdminCode(event)">
+        <div class="field">
+          <label for="adminCodeInput">Voer de geheime code in</label>
+          <input type="password" id="adminCodeInput" placeholder="Code..." autocomplete="off">
+          <div class="err-msg" id="authErr">Verkeerde code. Probeer opnieuw.</div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" onclick="closeAuthModal()">Annuleren</button>
+          <button type="submit" class="btn pri">Ontgrendelen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Control Panel Modal -->
+  <div class="overlay" id="adminPanelModal">
+    <div class="dialog">
+      <h3 id="panelHeading">Game of App toevoegen</h3>
+      <div class="mode-switch">
+        <button type="button" class="mode-btn active" id="pTab-add" onclick="openPanel('add')">+ Toevoegen</button>
+        <button type="button" class="mode-btn" id="pTab-mensen" onclick="openPanel('mensen')">Mensen & Straf</button>
+        <button type="button" class="mode-btn" id="pTab-stijl" onclick="openPanel('stijl')">Banner & Stijl</button>
+      </div>
+
+      <!-- Section 1: Add Game / App -->
+      <div id="sec-add">
+        <div class="mode-switch">
+          <button type="button" class="mode-btn active" id="modeLinkBtn" onclick="setMode('link')">Via Link (URL)</button>
+          <button type="button" class="mode-btn" id="modeHtmlBtn" onclick="setMode('html')">Via HTML-code</button>
+        </div>
+
+        <div class="field">
+          <label for="itemTitle">Naam</label>
+          <input type="text" id="itemTitle" placeholder="Bijv. Candy clicker">
+        </div>
+
+        <div class="field">
+          <label for="itemCat">Categorie</label>
+          <select id="itemCat">
+            <option value="games">Games</option>
+            <option value="apps">Apps</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="itemFile">Afbeelding (bestand)</label>
+          <input type="file" id="itemFile" accept="image/*" onchange="handleFileSelect(event)">
+          <span class="sub-label">...of afbeelding-link / emoji</span>
+          <input type="text" id="itemIcon" placeholder="https://... of 🍬">
+        </div>
+
+        <div class="field" id="linkField">
+          <label for="itemUrl">Game / App Link (URL)</label>
+          <input type="url" id="itemUrl" placeholder="https://voorbeeld.nl/game">
+        </div>
+
+        <div class="field" id="htmlField" style="display:none;">
+          <label for="itemHtml">Plak hier je HTML-code</label>
+          <textarea id="itemHtml" placeholder="<!DOCTYPE html><html><body><h1>Mijn Game</h1></body></html>"></textarea>
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn danger" onclick="resetCustomItems()">Reset opgeslagen</button>
+          <button type="button" class="btn" onclick="closePanel()">Annuleren</button>
+          <button type="button" class="btn pri" onclick="saveItem()">Opslaan</button>
+        </div>
+      </div>
+
+      <!-- Section 2: Mensen, Ban-overzicht & Groepsstraf -->
+      <div id="sec-mensen" style="display:none;">
+        <div class="box-card">
+          <h4>Ban-overzicht</h4>
+          <div class="inline-row">
+            <input type="text" id="banInput" placeholder="Naam of ID om te blokkeren...">
+            <button type="button" class="btn danger" onclick="addBan()">Ban</button>
+          </div>
+          <div class="ban-list" id="banList"></div>
+        </div>
+
+        <div class="box-card">
+          <h4>Antwoorden en groepsstraf</h4>
+          <div class="inline-row" style="margin-bottom:10px;">
+            <span>Eruit voor</span>
+            <input type="number" id="punishMinutes" value="10" min="1" max="1440" style="max-width:85px;">
+            <span>minuten</span>
+          </div>
+          <div class="field" style="margin-bottom:10px;">
+            <input type="text" id="punishReason" placeholder="Reden (mag leeg)">
+          </div>
+          <div class="inline-row">
+            <button type="button" class="btn pri" onclick="startGroupPunishment()">Groepsstraf geven</button>
+            <button type="button" class="btn" onclick="liftGroupPunishment()">Laatste groepsstraf opheffen</button>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" onclick="closePanel()">Sluiten</button>
+        </div>
+      </div>
+
+      <!-- Section 3: Banner & Stijl -->
+      <div id="sec-stijl" style="display:none;">
+        <div class="box-card">
+          <h4>Game van de dag kiezen</h4>
+          <div class="inline-row">
+            <select id="gotdSelect"></select>
+            <button type="button" class="btn pri" onclick="saveGotdChoice()">Instellen</button>
+          </div>
+        </div>
+        <div class="box-card">
+          <h4>Aankondigingsbanner</h4>
+          <div class="inline-row">
+            <input type="text" id="bannerInput" placeholder="Bijv. Nieuwe games toegevoegd!">
+            <button type="button" class="btn pri" onclick="setBanner()">Toon banner</button>
+          </div>
+        </div>
+        <div class="box-card">
+          <h4>Accentkleur</h4>
+          <div class="inline-row">
+            <input type="color" id="accentPicker" value="#1f6fe5" style="width:64px;height:40px;padding:2px;">
+            <button type="button" class="btn pri" onclick="applyAccent()">Kleur toepassen</button>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" onclick="closePanel()">Sluiten</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player Modal -->
+  <div class="player" id="player">
+    <div class="player-bar">
+      <strong id="playerTitle">Titel</strong>
+      <button class="btn pri" onclick="closePlayer()">✕ Sluiten</button>
+    </div>
+    <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+  </div>
+
+  <script>
+    const ADMIN_CODE = "irfan";
+    const STORAGE_KEY = "custom_hub_items_v1";
+    const FAV_KEY = "irfanhub_favs_v1";
+    const GOTD_KEY = "irfanhub_gotd_v1";
+    const BAN_KEY = "irfanhub_bans_v1";
+    const PUNISH_KEY = "irfanhub_punish_until_v1";
+    const PUNISH_REASON_KEY = "irfanhub_punish_reason_v1";
+    const BANNER_KEY = "irfanhub_banner_v1";
+    const ACCENT_KEY = "irfanhub_accent_v1";
+
+    const CANDY_HTML = [
+      "<!DOCTYPE html><html><head><meta charset='utf-8'><style>",
+      "body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#38bdf8,#1d4ed8);color:#fff;font-family:system-ui,sans-serif;user-select:none}",
+      "h1{font-size:2.4rem;text-shadow:0 4px 12px rgba(0,0,0,.35)}",
+      "#candy{font-size:7rem;cursor:pointer;transition:transform .08s}",
+      "#candy:active{transform:scale(.88)}",
+      "#score{font-size:2rem;font-weight:800;margin:14px 0}",
+      "button{padding:10px 20px;border-radius:999px;border:none;background:#ec4899;color:#fff;font-weight:700;cursor:pointer;font-size:1rem}",
+      "</style></head><body>",
+      "<h1>Candy Clicker</h1><div id='candy'>🍬</div><div id='score'>0 Snoepjes</div>",
+      "<button id='upg'>Upgrade (+1 per klik) — 15 snoepjes</button>",
+      "<script>let s=0,p=1,c=15;const sc=document.getElementById('score'),up=document.getElementById('upg');",
+      "document.getElementById('candy').onclick=()=>{s+=p;sc.textContent=s+' Snoepjes'};",
+      "up.onclick=()=>{if(s>=c){s-=c;p++;c=Math.round(c*1.6);sc.textContent=s+' Snoepjes';up.textContent='Upgrade (+1 per klik) — '+c+' snoepjes'}};",
+      "</" + "script></body></html>"
+    ].join("");
+
+    const SKIPPER_HTML = [
+      "<!DOCTYPE html><html><body style='font-family:sans-serif;background:#0b1120;color:#fff;padding:24px;'>",
+      "<h2>YouTube Ad Skipper App</h2><p>Jouw HTML-code draait hier direct in de hub.</p></body></html>"
+    ].join("");
+
+    const DEFAULT_ITEMS = [
+      { id: "def-candy", title: "Candy clicker", category: "games", icon: "🍬", type: "html", html: CANDY_HTML },
+      { id: "def-1", title: "Youtube ad skipper", category: "apps", icon: "⏭️", type: "html", html: SKIPPER_HTML }
+    ];
+
+    let isAdmin = false;
+    let addMode = "link";
+    let currentTab = "all";
+    let uploadedImageData = "";
+    let typedBuffer = "";
+    let customItems = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    let favorites = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
+    let bans = JSON.parse(localStorage.getItem(BAN_KEY) || "[]");
+
+    document.addEventListener("keydown", (e) => {
+      const tag = document.activeElement && document.activeElement.tagName;
+      const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
+      if (e.altKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        if (isAdmin) lockAdmin();
+        else openAuthModal();
+        return;
+      }
+
+      if (!inInput && !e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+        typedBuffer = (typedBuffer + e.key.toLowerCase()).slice(-6);
+        if (typedBuffer.endsWith("irfan")) {
+          typedBuffer = "";
+          if (!isAdmin) openAuthModal();
+        }
+      }
+    });
+
+    function openAuthModal() {
+      document.getElementById("authErr").style.display = "none";
+      const input = document.getElementById("adminCodeInput");
+      input.value = "";
+      document.getElementById("authModal").classList.add("open");
+      setTimeout(() => input.focus(), 50);
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.remove("open");
+    }
+
+    function checkAdminCode(e) {
+      e.preventDefault();
+      if (document.getElementById("adminCodeInput").value.trim() === ADMIN_CODE) {
+        isAdmin = true;
+        document.body.classList.add("admin-unlocked");
+        closeAuthModal();
+        checkLockout();
+      } else {
+        document.getElementById("authErr").style.display = "block";
+      }
+    }
+
+    function lockAdmin() {
+      isAdmin = false;
+      document.body.classList.remove("admin-unlocked");
+      closePanel();
+      checkLockout();
+    }
+
+    function openPanel(section) {
+      if (!isAdmin) return openAuthModal();
+      document.getElementById("adminPanelModal").classList.add("open");
+      const titles = {
+        add: "Game of App toevoegen",
+        mensen: "Mensen & Straf",
+        stijl: "Banner & Stijl"
+      };
+      document.getElementById("panelHeading").textContent = titles[section] || "Beheer";
+      ["add", "mensen", "stijl"].forEach(s => {
+        document.getElementById("sec-" + s).style.display = s === section ? "block" : "none";
+        document.getElementById("pTab-" + s).classList.toggle("active", s === section);
+      });
+      if (section === "mensen") renderBans();
+      if (section === "stijl") populateGotdSelect();
+    }
+
+    function closePanel() {
+      document.getElementById("adminPanelModal").classList.remove("open");
+    }
+
+    function populateGotdSelect() {
+      const sel = document.getElementById("gotdSelect");
+      const current = localStorage.getItem(GOTD_KEY) || "auto";
+      const all = getAllItems();
+      sel.innerHTML = `<option value="auto">Automatisch (wisselt elke dag)</option>` +
+        all.map(item => `<option value="${item.id}" ${current === item.id ? "selected" : ""}>${item.title}</option>`).join("");
+    }
+
+    function saveGotdChoice() {
+      if (!isAdmin) return;
+      const val = document.getElementById("gotdSelect").value;
+      if (val === "auto") localStorage.removeItem(GOTD_KEY);
+      else localStorage.setItem(GOTD_KEY, val);
+      render();
+    }
+
+    function getGameOfTheDay(all) {
+      const pinnedId = localStorage.getItem(GOTD_KEY);
+      if (pinnedId) {
+        const found = all.find(i => i.id === pinnedId);
+        if (found) return found;
+      }
+      const games = all.filter(i => i.category === "games");
+      const pool = games.length ? games : all;
+      if (!pool.length) return null;
+      const dayNumber = Math.floor(Date.now() / 86400000);
+      return pool[dayNumber % pool.length];
+    }
+
+    function toggleFavorite(id, e) {
+      if (e) e.stopPropagation();
+      if (favorites.includes(id)) {
+        favorites = favorites.filter(f => f !== id);
+      } else {
+        favorites.push(id);
+      }
+      localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
+      render();
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) {
+        uploadedImageData = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        uploadedImageData = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function addBan() {
+      if (!isAdmin) return;
+      const val = document.getElementById("banInput").value.trim();
+      if (!val) return;
+      if (!bans.includes(val)) {
+        bans.push(val);
+        localStorage.setItem(BAN_KEY, JSON.stringify(bans));
+      }
+      document.getElementById("banInput").value = "";
+      renderBans();
+    }
+
+    function removeBan(name) {
+      if (!isAdmin) return;
+      bans = bans.filter(b => b !== name);
+      localStorage.setItem(BAN_KEY, JSON.stringify(bans));
+      renderBans();
+    }
+
+    function renderBans() {
+      const el = document.getElementById("banList");
+      if (!bans.length) {
+        el.innerHTML = `<div style="color:#94a3b8;font-size:0.85rem;">Geen geblokkeerde personen in de lijst.</div>`;
+        return;
+      }
+      el.innerHTML = bans.map(name => `
+        <div class="ban-item">
+          <span>🚫 ${name}</span>
+          <button type="button" class="btn" style="padding:4px 10px;font-size:0.78rem;" onclick="removeBan('${name.replace(/'/g, "\\'")}')">Verwijder</button>
+        </div>
+      `).join("");
+    }
+
+    function startGroupPunishment() {
+      if (!isAdmin) return;
+      const mins = Math.max(1, parseInt(document.getElementById("punishMinutes").value, 10) || 10);
+      const reason = document.getElementById("punishReason").value.trim() || "Tijdelijke groepsstraf ingesteld door beheerder.";
+      const until = Date.now() + mins * 60 * 1000;
+      localStorage.setItem(PUNISH_KEY, String(until));
+      localStorage.setItem(PUNISH_REASON_KEY, reason);
+      checkLockout();
+    }
+
+    function liftGroupPunishment() {
+      if (!isAdmin) return;
+      localStorage.removeItem(PUNISH_KEY);
+      localStorage.removeItem(PUNISH_REASON_KEY);
+      checkLockout();
+    }
+
+    function checkLockout() {
+      const screen = document.getElementById("lockoutScreen");
+      if (isAdmin) {
+        screen.classList.remove("active");
+        return;
+      }
+      const until = Number(localStorage.getItem(PUNISH_KEY) || 0);
+      const now = Date.now();
+      if (until > now) {
+        const secsLeft = Math.ceil((until - now) / 1000);
+        const mins = Math.floor(secsLeft / 60);
+        const secs = secsLeft % 60;
+        document.getElementById("lockTitle").textContent = "Groepsstraf actief";
+        document.getElementById("lockReason").textContent = localStorage.getItem(PUNISH_REASON_KEY) || "Tijdelijke pauze ingesteld.";
+        document.getElementById("lockTimer").textContent = `Resterende tijd: ${mins}m ${secs}s`;
+        screen.classList.add("active");
+      } else {
+        screen.classList.remove("active");
+      }
+    }
+
+    function setBanner() {
+      if (!isAdmin) return;
+      const txt = document.getElementById("bannerInput").value.trim();
+      localStorage.setItem(BANNER_KEY, txt);
+      renderBanner();
+    }
+
+    function clearBanner() {
+      localStorage.removeItem(BANNER_KEY);
+      renderBanner();
+    }
+
+    function renderBanner() {
+      const txt = localStorage.getItem(BANNER_KEY) || "";
+      const box = document.getElementById("bannerBox");
+      document.getElementById("bannerText").textContent = txt;
+      box.classList.toggle("show", Boolean(txt));
+    }
+
+    function applyAccent() {
+      if (!isAdmin) return;
+      const col = document.getElementById("accentPicker").value;
+      document.documentElement.style.setProperty("--acc", col);
+      localStorage.setItem(ACCENT_KEY, col);
+    }
+
+    function getAllItems() {
+      return [...customItems, ...DEFAULT_ITEMS];
+    }
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
+      document.getElementById("t-" + tab).classList.add("on");
+      render();
+    }
+
+    function resetView() {
+      document.getElementById("search").value = "";
+      setTab("all");
+    }
+
+    function setMode(mode) {
+      addMode = mode;
+      document.getElementById("modeLinkBtn").classList.toggle("active", mode === "link");
+      document.getElementById("modeHtmlBtn").classList.toggle("active", mode === "html");
+      document.getElementById("linkField").style.display = mode === "link" ? "block" : "none";
+      document.getElementById("htmlField").style.display = mode === "html" ? "block" : "none";
+    }
+
+    function saveItem() {
+      if (!isAdmin) return;
+      const title = document.getElementById("itemTitle").value.trim();
+      const category = document.getElementById("itemCat").value;
+      const typedIcon = document.getElementById("itemIcon").value.trim();
+      const icon = uploadedImageData || typedIcon || (category === "games" ? "🎮" : "⚡");
+      const url = document.getElementById("itemUrl").value.trim();
+      const html = document.getElementById("itemHtml").value;
+
+      if (!title) return alert("Vul eerst een naam in.");
+      if (addMode === "link" && !url) return alert("Vul een geldige link in.");
+      if (addMode === "html" && !html.trim()) return alert("Plak eerst je HTML-code.");
+
+      customItems.unshift({
+        id: "c-" + Date.now(),
+        title,
+        category,
+        icon,
+        type: addMode,
+        url,
+        html
+      });
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+      document.getElementById("itemTitle").value = "";
+      document.getElementById("itemIcon").value = "";
+      document.getElementById("itemFile").value = "";
+      document.getElementById("itemUrl").value = "";
+      document.getElementById("itemHtml").value = "";
+      uploadedImageData = "";
+      closePanel();
+      render();
+    }
+
+    function deleteCustom(e, id) {
+      e.stopPropagation();
+      if (!isAdmin) return;
+      customItems = customItems.filter(item => item.id !== id);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
+      render();
+    }
+
+    function resetCustomItems() {
+      if (!isAdmin) return;
+      customItems = [];
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    }
+
+    function launchItem(item) {
+      document.getElementById("playerTitle").textContent = item.title;
+      const frame = document.getElementById("frame");
+      if (item.type === "html") {
+        frame.removeAttribute("src");
+        frame.srcdoc = item.html;
+      } else {
+        frame.removeAttribute("srcdoc");
+        frame.src = item.url;
+      }
+      document.getElementById("player").classList.add("open");
+    }
+
+    function closePlayer() {
+      document.getElementById("player").classList.remove("open");
+      document.getElementById("frame").removeAttribute("src");
+      document.getElementById("frame").removeAttribute("srcdoc");
+    }
+
+    function render() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const all = getAllItems();
+
+      const gotd = getGameOfTheDay(all);
+      if (gotd) {
+        document.getElementById("heroTitle").textContent = gotd.title;
+        document.getElementById("heroPlayBtn").onclick = () => launchItem(gotd);
+        const favBtn = document.getElementById("heroFavBtn");
+        favBtn.classList.toggle("liked", favorites.includes(gotd.id));
+        favBtn.onclick = (e) => toggleFavorite(gotd.id, e);
+
+        const prev = document.getElementById("heroPreview");
+        const isImg = gotd.icon.startsWith("http") || gotd.icon.startsWith("data:image/");
+        if (isImg) {
+          prev.style.backgroundImage = `url('${gotd.icon}')`;
+          prev.textContent = "";
+        } else {
+          prev.style.backgroundImage = "";
+          prev.textContent = gotd.icon;
+        }
+        prev.onclick = () => launchItem(gotd);
+      }
+
+      const filtered = all.filter(item => {
+        const matchTab =
+          currentTab === "all" ||
+          (currentTab === "fav" ? favorites.includes(item.id) : item.category === currentTab);
+        const matchSearch = item.title.toLowerCase().includes(q);
+        return matchTab && matchSearch;
+      });
+
+      const labels = { all: "Alles", games: "Games", apps: "Apps", fav: "Favorieten" };
+      document.getElementById("heading").innerHTML =
+        `${labels[currentTab]} <small>${filtered.length} items</small>`;
+
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+
+      filtered.forEach(item => {
+        const isImage = item.icon.startsWith("http") || item.icon.startsWith("data:image/");
+        const isLiked = favorites.includes(item.id);
+        const tile = document.createElement("div");
+        tile.className = "tile";
+        tile.onclick = () => launchItem(item);
+        tile.innerHTML = `
+          <span class="badge">${item.type === "html" ? "HTML" : "LINK"}</span>
+          ${item.id.startsWith("c-") ? `<button class="del" title="Verwijder">✕</button>` : ""}
+          <button class="tile-fav ${isLiked ? "liked" : ""}" title="Favoriet">♥</button>
+          <div class="thumb" style="${isImage ? `background-image:url('${item.icon}')` : ""}">
+            ${isImage ? "" : item.icon}
+          </div>
+          <div class="strip">
+            <span>${item.title}</span>
+            <span>▶</span>
+          </div>
+        `;
+        const delBtn = tile.querySelector(".del");
+        if (delBtn) delBtn.onclick = (e) => deleteCustom(e, item.id);
+        tile.querySelector(".tile-fav").onclick = (e) => toggleFavorite(item.id, e);
+        grid.appendChild(tile);
+      });
+    }
+
+    const savedAccent = localStorage.getItem(ACCENT_KEY);
+    if (savedAccent) {
+      document.documentElement.style.setProperty("--acc", savedAccent);
+      document.getElementById("accentPicker").value = savedAccent;
+    }
+    renderBanner();
+    render();
+    checkLockout();
+    setInterval(checkLockout, 1000);
+  </script>
+</body>
+</html>
