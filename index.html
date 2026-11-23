@@ -320,29 +320,6 @@
       font-weight: 600;
     }
 
-    .dl-bar {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px 18px;
-      margin-bottom: 34px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .dl-bar input {
-      flex: 1;
-      min-width: 190px;
-      background: #050914;
-      border: 1px solid var(--border);
-      color: #fff;
-      border-radius: 12px;
-      padding: 9px 12px;
-      outline: none;
-    }
-
     /* Modals */
     .overlay {
       display: none;
@@ -523,17 +500,6 @@
     </section>
 
     <div id="contentArea"></div>
-
-    <section class="dl-bar">
-      <div>
-        <strong>Bestand downloaden van deze site</strong>
-        <div style="color:var(--muted);font-size:0.84rem;">Vul een bestandsnaam of pad op je site in (bijv. <code>logo.png</code> of <code>index.html</code>).</div>
-      </div>
-      <div class="inline-row" style="flex:1;justify-content:flex-end;">
-        <input type="text" id="dlPath" value="logo.png" placeholder="Bestand op je site, bijv. logo.png">
-        <button type="button" class="btn pri" id="dlSiteFileBtn">Download</button>
-      </div>
-    </section>
   </div>
 
   <!-- Admin Unlock Modal -->
@@ -1109,37 +1075,6 @@
       document.getElementById("frame").removeAttribute("src");
       document.getElementById("frame").removeAttribute("srcdoc");
     }
-
-    async function downloadFromSite(filePathOrUrl, customName) {
-      const cleanInput = String(filePathOrUrl || "").trim();
-      if (!cleanInput) return alert("Vul een bestandsnaam of pad in.");
-
-      const targetUrl = new URL(cleanInput, window.location.origin + "/").href;
-      const fileName = customName || targetUrl.split("/").pop()?.split("?")[0] || "download";
-
-      try {
-        const response = await fetch(targetUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status} — bestand niet gevonden`);
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
-      } catch (err) {
-        alert("Download mislukt: " + err.message);
-      }
-    }
-
-    document.getElementById("dlSiteFileBtn").addEventListener("click", () => {
-      downloadFromSite(document.getElementById("dlPath").value);
-    });
 
     function makeTile(item) {
       const isImage = item.icon.startsWith("http") || item.icon.startsWith("data:image/");
