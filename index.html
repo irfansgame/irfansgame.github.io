@@ -687,9 +687,12 @@
   <div class="player" id="player">
     <div class="player-bar">
       <strong id="playerTitle">Titel</strong>
-      <button class="btn pri" onclick="closePlayer()">✕ Sluiten</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" id="fsBtn" onclick="toggleFullscreen()">⛶ Volledig scherm</button>
+        <button class="btn pri" onclick="closePlayer()">✕ Sluiten</button>
+      </div>
     </div>
-    <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
+    <iframe id="frame" allow="fullscreen; autoplay; gamepad; clipboard-write" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads"></iframe>
   </div>
 
   <script>
@@ -1112,7 +1115,26 @@
       document.getElementById("player").classList.add("open");
     }
 
+    function toggleFullscreen() {
+      const frame = document.getElementById("frame");
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (frame.requestFullscreen) {
+        frame.requestFullscreen().catch(() => alert("Volledig scherm is niet beschikbaar in deze browser."));
+      } else if (frame.webkitRequestFullscreen) {
+        frame.webkitRequestFullscreen();
+      } else {
+        alert("Volledig scherm is niet beschikbaar in deze browser.");
+      }
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      const btn = document.getElementById("fsBtn");
+      if (btn) btn.textContent = document.fullscreenElement ? "⛶ Verlaat volledig scherm" : "⛶ Volledig scherm";
+    });
+
     function closePlayer() {
+      if (document.fullscreenElement) document.exitFullscreen();
       document.getElementById("player").classList.remove("open");
       document.getElementById("frame").removeAttribute("src");
       document.getElementById("frame").removeAttribute("srcdoc");
