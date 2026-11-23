@@ -641,6 +641,11 @@
       <h3>Game of App bewerken</h3>
       <input type="hidden" id="editId">
 
+      <div class="mode-switch">
+        <button type="button" class="mode-btn active" id="editModeLinkBtn" onclick="setEditMode('link')">Via Link (URL)</button>
+        <button type="button" class="mode-btn" id="editModeHtmlBtn" onclick="setEditMode('html')">Via HTML-code</button>
+      </div>
+
       <div class="field">
         <label for="editTitle">Naam</label>
         <input type="text" id="editTitle" placeholder="Nieuwe naam">
@@ -655,7 +660,9 @@
       </div>
 
       <div class="field">
-        <label for="editIcon">Afbeelding-link of emoji</label>
+        <label for="editFile">Afbeelding (bestand)</label>
+        <input type="file" id="editFile" accept="image/*" onchange="handleEditFileSelect(event)">
+        <span class="sub-label" id="editIconNote">...of afbeelding-link / emoji</span>
         <input type="text" id="editIcon" placeholder="https://... of 🎮">
       </div>
 
@@ -666,7 +673,7 @@
 
       <div class="field" id="editHtmlField" style="display:none;">
         <label for="editHtml">HTML-code</label>
-        <textarea id="editHtml"></textarea>
+        <textarea id="editHtml" style="min-height:260px;"></textarea>
       </div>
 
       <div class="dialog-actions">
@@ -788,22 +795,55 @@
       document.getElementById("adminPanelModal").classList.remove("open");
     }
 
+    let editMode = "link";
+    let editUploadedImageData = "";
+    let editExistingIcon = "";
+
+    function setEditMode(mode) {
+      editMode = mode;
+      document.getElementById("editModeLinkBtn").classList.toggle("active", mode === "link");
+      document.getElementById("editModeHtmlBtn").classList.toggle("active", mode === "html");
+      document.getElementById("editLinkField").style.display = mode === "link" ? "block" : "none";
+      document.getElementById("editHtmlField").style.display = mode === "html" ? "block" : "none";
+    }
+
+    function handleEditFileSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) {
+        editUploadedImageData = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        editUploadedImageData = e.target.result;
+        document.getElementById("editIconNote").textContent = "Nieuwe afbeelding gekozen: " + file.name;
+      };
+      reader.readAsDataURL(file);
+    }
+
     function openEditModal(e, id) {
       e.stopPropagation();
       if (!isAdmin) return openAuthModal();
       const item = customItems.find(i => i.id === id);
       if (!item) return;
 
+      editUploadedImageData = "";
+      editExistingIcon = item.icon;
+      document.getElementById("editFile").value = "";
+
+      const isUploadedImg = item.icon.startsWith("data:image/");
+      document.getElementById("editIconNote").textContent = isUploadedImg
+        ? "Huidige afbeelding is een upload. Kies een nieuw bestand om te vervangen, of vul een link/emoji in."
+        : "...of afbeelding-link / emoji";
+
       document.getElementById("editId").value = item.id;
       document.getElementById("editTitle").value = item.title;
       document.getElementById("editCat").value = item.category;
-      document.getElementById("editIcon").value = item.icon;
+      document.getElementById("editIcon").value = isUploadedImg ? "" : item.icon;
       document.getElementById("editUrl").value = item.url || "";
       document.getElementById("editHtml").value = item.html || "";
 
-      const isHtml = item.type === "html";
-      document.getElementById("editLinkField").style.display = isHtml ? "none" : "block";
-      document.getElementById("editHtmlField").style.display = isHtml ? "block" : "none";
+      setEditMode(item.type === "html" ? "html" : "link");
       document.getElementById("editModal").classList.add("open");
     }
 
@@ -819,19 +859,21 @@
 
       const title = document.getElementById("editTitle").value.trim();
       const category = document.getElementById("editCat").value;
-      const icon = document.getElementById("editIcon").value.trim() || (category === "games" ? "🎮" : "⚡");
+      const typedIcon = document.getElementById("editIcon").value.trim();
+      const icon = editUploadedImageData || typedIcon || editExistingIcon || (category === "games" ? "🎮" : "⚡");
       const url = document.getElementById("editUrl").value.trim();
       const html = document.getElementById("editHtml").value;
 
       if (!title) return alert("Vul eerst een naam in.");
-      if (customItems[idx].type === "link" && !url) return alert("Vul een geldige link in.");
-      if (customItems[idx].type === "html" && !html.trim()) return alert("HTML-code mag niet leeg zijn.");
+      if (editMode === "link" && !url) return alert("Vul een geldige link in.");
+      if (editMode === "html" && !html.trim()) return alert("HTML-code mag niet leeg zijn.");
 
       customItems[idx] = {
         ...customItems[idx],
         title,
         category,
         icon,
+        type: editMode,
         url,
         html
       };
