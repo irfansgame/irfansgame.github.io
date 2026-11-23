@@ -453,6 +453,88 @@
       border-bottom: 1px solid var(--border);
     }
     .player iframe { flex: 1; width: 100%; border: none; background: #fff; }
+
+    /* ===== Nieuwe stijl: zwart, pill-menu, grote icoon-tegels ===== */
+    :root { --bg: #000; --panel: rgba(255,255,255,0.07); --border: rgba(255,255,255,0.14); }
+    body { background: #000; padding: 18px 22px 40px; }
+    .glow { background: radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--acc) 35%, transparent), transparent 55%); }
+    .wrap { max-width: 1280px; }
+
+    header.top { position: relative; justify-content: space-between; gap: 14px; margin-bottom: 26px; }
+    .brand { background: none; border: none; box-shadow: none; padding: 0; gap: 0; }
+    .brand:hover { transform: none; }
+    .brand span { display: none; }
+    .brand-logo { width: 46px; height: 46px; border-radius: 12px; }
+
+    .pill-nav {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px; border-radius: 999px;
+      background: rgba(20,20,24,0.85);
+      border: 2px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      position: absolute; left: 50%; transform: translateX(-50%);
+    }
+    .pill-btn {
+      display: flex; align-items: center; gap: 8px;
+      height: 44px; padding: 0 18px; border-radius: 999px;
+      background: transparent; color: #cbd5e1; border: none;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: 0.15s;
+    }
+    .pill-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .pill-btn.active { background: #fff; color: #000; }
+
+    .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+    .srch { margin-left: 0; background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.18); padding: 10px 18px; }
+    .srch input { width: 150px; font-size: 0.95rem; }
+    .btn.white { background: #fff; color: #000; border-color: #fff; font-weight: 800; }
+
+    @media (max-width: 900px) {
+      header.top { flex-wrap: wrap; }
+      .pill-nav { position: static; transform: none; order: 3; width: 100%; justify-content: center; }
+    }
+
+    /* Hero */
+    .gotd-hero {
+      border-radius: 28px; padding: 40px 44px; min-height: 340px; margin-bottom: 36px;
+      background:
+        radial-gradient(circle at 15% 30%, color-mix(in srgb, var(--acc) 55%, transparent), transparent 55%),
+        radial-gradient(circle at 70% 70%, rgba(124,58,237,0.35), transparent 55%),
+        #0a0a12;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: none;
+    }
+    .gotd-label { color: #fff; opacity: 0.85; letter-spacing: 0.04em; text-transform: none; font-size: 0.95rem; font-weight: 600; }
+    .gotd-title { font-size: clamp(2.4rem, 6vw, 4.4rem); font-weight: 900; letter-spacing: -0.02em; margin-bottom: 26px; }
+    .gotd-play { background: #fff; color: #000; box-shadow: none; padding: 14px 34px; font-size: 1.05rem; font-weight: 800; }
+    .gotd-fav { width: 50px; height: 50px; }
+    .gotd-preview { width: 300px; height: 300px; max-width: 40%; border-radius: 24px; font-size: 6rem; }
+    @media (max-width: 700px) { .gotd-hero { padding: 24px; } .gotd-preview { width: 100%; max-width: 100%; height: 220px; } }
+
+    /* Secties en tegels */
+    h2 { font-size: 1.6rem; font-weight: 800; gap: 12px; }
+    h2 small { background: rgba(255,255,255,0.12); color: #fff; padding: 2px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 22px 16px; }
+    .tile { background: none; border: none; border-radius: 0; overflow: visible; box-shadow: none; }
+    .tile:hover { transform: translateY(-4px); box-shadow: none; }
+    .tile:hover .thumb { box-shadow: 0 0 0 3px var(--acc), 0 12px 26px rgba(0,0,0,0.6); }
+    .thumb { height: auto; aspect-ratio: 1 / 1; border-radius: 20px; font-size: 3rem; border: 1px solid rgba(255,255,255,0.12); transition: box-shadow 0.15s ease; }
+    .badge { display: none; }
+    .strip { padding: 8px 2px 0; justify-content: center; text-align: center; font-size: 0.85rem; font-weight: 600; color: #e5e7eb; }
+    .strip span:last-child { display: none; }
+    .tile-fav { top: 6px; right: 6px; width: 26px; height: 26px; background: rgba(0,0,0,0.65); opacity: 0; transition: opacity 0.15s; }
+    .tile:hover .tile-fav, .tile-fav.liked { opacity: 1; }
+    .edit-btn { right: auto; left: 6px; top: 6px; background: rgba(0,0,0,0.8); border-radius: 50%; width: 26px; height: 26px; padding: 0; line-height: 24px; text-align: center; }
+    .del { right: 38px; top: 6px; background: rgba(0,0,0,0.8); border-radius: 50%; width: 26px; height: 26px; padding: 0; line-height: 24px; text-align: center; }
+    body.admin-unlocked .edit-btn, body.admin-unlocked .del { display: block; }
+    .tile-add {
+      border: 2px dashed rgba(255,255,255,0.25); border-radius: 20px; aspect-ratio: 1 / 1;
+      display: none; align-items: center; justify-content: center; font-size: 2.4rem; color: rgba(255,255,255,0.5);
+      cursor: pointer; transition: 0.15s;
+    }
+    .tile-addwrap { display: none; }
+    body.admin-unlocked .tile-addwrap { display: block; }
+    .tile-add:hover { border-color: var(--acc); color: #fff; }
+    body.admin-unlocked .tile-add { display: flex; }
   </style>
 </head>
 <body>
@@ -477,13 +559,22 @@
         <img src="logo.png" alt="ig. logo" class="brand-logo" onerror="this.style.display='none'">
         <span>IrfanGames</span>
       </button>
-      <button class="btn pri admin-only" onclick="openPanel('add')">+ Toevoegen</button>
-      <button class="btn admin-only" onclick="openPanel('mensen')">🛡️ Mensen & Straf</button>
-      <button class="btn admin-only" onclick="openPanel('stijl')">🎨 Banner & Stijl</button>
-      <button class="btn admin-only" onclick="lockAdmin()">🔒 Vergrendel</button>
-      <label class="srch">
-        <input type="search" id="search" placeholder="Zoek game of app..." oninput="render()">
-      </label>
+      <nav class="pill-nav" id="pillNav">
+        <button type="button" class="pill-btn active" data-tab="all" onclick="setTab('all')">🎮 Alles</button>
+        <button type="button" class="pill-btn" data-tab="games" onclick="setTab('games')">Games</button>
+        <button type="button" class="pill-btn" data-tab="apps" onclick="setTab('apps')">Apps</button>
+        <button type="button" class="pill-btn" data-tab="favs" onclick="setTab('favs')">♥ Favorieten</button>
+      </nav>
+      <div class="header-right">
+        <button class="btn white admin-only" onclick="openPanel('add')">+ Toevoegen</button>
+        <button class="btn admin-only" onclick="openPanel('mensen')">🛡️ Mensen & Straf</button>
+        <button class="btn admin-only" onclick="openPanel('stijl')">🎨 Stijl</button>
+        <button class="btn admin-only" onclick="lockAdmin()">🔒 Klaar</button>
+        <label class="srch">
+          <span style="margin-right:8px;">🔍</span>
+          <input type="search" id="search" placeholder="Zoeken..." oninput="render()">
+        </label>
+      </div>
     </header>
 
     <!-- Game van de dag -->
@@ -492,7 +583,7 @@
         <span class="gotd-label">GAME VAN DE DAG</span>
         <h1 class="gotd-title" id="heroTitle">Nog geen game toegevoegd</h1>
         <div class="gotd-actions">
-          <button class="gotd-play" id="heroPlayBtn">▶ Spelen</button>
+          <button class="gotd-play" id="heroPlayBtn">Nu spelen</button>
           <button class="gotd-fav" id="heroFavBtn" title="Favoriet">♥</button>
         </div>
       </div>
@@ -1052,9 +1143,18 @@
       return [...customItems, ...DEFAULT_ITEMS];
     }
 
+    let currentTab = "all";
+
+    function setTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll(".pill-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+      document.getElementById("gotdHero").style.display = tab === "all" ? "flex" : "none";
+      render();
+    }
+
     function resetView() {
       document.getElementById("search").value = "";
-      render();
+      setTab("all");
     }
 
     function setMode(mode) {
@@ -1180,7 +1280,18 @@
       return tile;
     }
 
-    function renderSection(titleText, items, emptyText) {
+    function makeAddTile(category) {
+      const wrap = document.createElement("div");
+      wrap.className = "tile tile-addwrap";
+      wrap.innerHTML = `<div class="tile-add">+</div><div class="strip"><span>Toevoegen</span></div>`;
+      wrap.onclick = () => {
+        openPanel("add");
+        document.getElementById("itemCat").value = category;
+      };
+      return wrap;
+    }
+
+    function renderSection(titleText, items, emptyText, addCategory) {
       const block = document.createElement("div");
       block.className = "section-block";
       const h2 = document.createElement("h2");
@@ -1192,12 +1303,19 @@
         note.className = "empty-note";
         note.textContent = emptyText;
         block.appendChild(note);
+        if (addCategory) {
+          const g = document.createElement("div");
+          g.className = "grid";
+          g.appendChild(makeAddTile(addCategory));
+          block.appendChild(g);
+        }
         return block;
       }
 
       const grid = document.createElement("div");
       grid.className = "grid";
       items.forEach(item => grid.appendChild(makeTile(item)));
+      if (addCategory) grid.appendChild(makeAddTile(addCategory));
       block.appendChild(grid);
       return block;
     }
@@ -1247,11 +1365,19 @@
 
       const area = document.getElementById("contentArea");
       area.innerHTML = "";
-      if (favs.length) {
-        area.appendChild(renderSection("Favorieten", favs, "Geen favorieten gevonden."));
+      if (currentTab === "favs") {
+        area.appendChild(renderSection("Favorieten", favs, "Je hebt nog geen favorieten. Tik op het hartje bij een game."));
+      } else {
+        if (currentTab === "all" && favs.length) {
+          area.appendChild(renderSection("Favorieten", favs, ""));
+        }
+        if (currentTab === "all" || currentTab === "games") {
+          area.appendChild(renderSection("Games", games, "Nog geen games in deze lijst.", "games"));
+        }
+        if (currentTab === "all" || currentTab === "apps") {
+          area.appendChild(renderSection("Apps", apps, "Nog geen apps in deze lijst.", "apps"));
+        }
       }
-      area.appendChild(renderSection("Games", games, "Nog geen games in deze lijst."));
-      area.appendChild(renderSection("Apps", apps, "Nog geen apps in deze lijst."));
     }
 
     const savedAccent = localStorage.getItem(ACCENT_KEY);
