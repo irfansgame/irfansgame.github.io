@@ -512,6 +512,12 @@
           <input type="password" id="adminCodeInput" placeholder="Code..." autocomplete="off">
           <div class="err-msg" id="authErr">Verkeerde code. Probeer opnieuw.</div>
         </div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
+            <input type="checkbox" id="rememberAdmin" checked style="width:auto;">
+            Onthoud mij op dit apparaat
+          </label>
+        </div>
         <div class="dialog-actions">
           <button type="button" class="btn" onclick="closeAuthModal()">Annuleren</button>
           <button type="submit" class="btn pri">Ontgrendelen</button>
@@ -705,6 +711,7 @@
     const PUNISH_REASON_KEY = "irfanhub_punish_reason_v1";
     const BANNER_KEY = "irfanhub_banner_v1";
     const ACCENT_KEY = "irfanhub_accent_v1";
+    const ADMIN_REMEMBER_KEY = "irfanhub_admin_remember_v1";
 
     function readJson(key, fallback) {
       try {
@@ -762,6 +769,10 @@
       if (document.getElementById("adminCodeInput").value.trim() === ADMIN_CODE) {
         isAdmin = true;
         document.body.classList.add("admin-unlocked");
+        const remember = document.getElementById("rememberAdmin");
+        if (remember && remember.checked) {
+          localStorage.setItem(ADMIN_REMEMBER_KEY, "1");
+        }
         closeAuthModal();
         checkLockout();
       } else {
@@ -771,6 +782,7 @@
 
     function lockAdmin() {
       isAdmin = false;
+      localStorage.removeItem(ADMIN_REMEMBER_KEY);
       document.body.classList.remove("admin-unlocked");
       closePanel();
       closeEditModal();
@@ -1246,6 +1258,10 @@
     if (savedAccent) {
       document.documentElement.style.setProperty("--acc", savedAccent);
       document.getElementById("accentPicker").value = savedAccent;
+    }
+    if (localStorage.getItem(ADMIN_REMEMBER_KEY) === "1") {
+      isAdmin = true;
+      document.body.classList.add("admin-unlocked");
     }
     renderBanner();
     render();
