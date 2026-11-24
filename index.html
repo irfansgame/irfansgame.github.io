@@ -652,6 +652,15 @@
       color: #e2e8f0; font-size: 0.92rem; text-align: center;
     }
     .player-hint.show { display: flex; }
+
+    .master-only { display: none; }
+    body.is-master .master-only { display: block; }
+    a.pill-btn { text-decoration: none; }
+    .chip { display: inline-block; margin-left: 8px; padding: 2px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; vertical-align: middle; }
+    .chip.ok { background: rgba(34,197,94,0.2); color: #4ade80; }
+    .chip.off { background: rgba(239,68,68,0.2); color: #f87171; }
+    .issued { margin-top: 12px; padding: 14px; border-radius: 14px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); }
+    .issued code { display: block; margin: 8px 0; padding: 10px 12px; font-size: 1.05rem; background: #050914; border-radius: 10px; word-break: break-all; user-select: all; }
   </style>
 </head>
 <body>
@@ -734,6 +743,7 @@
       <aside class="admin-side">
         <button type="button" class="side-btn" id="side-mensen" onclick="openPanel('mensen')">Mensen</button>
         <button type="button" class="side-btn" id="side-logboek" onclick="openPanel('logboek')">Logboek</button>
+        <button type="button" class="side-btn master-only" id="side-beheerders" onclick="openPanel('beheerders')">Beheerders</button>
         <button type="button" class="side-btn" id="side-tabs" onclick="openPanel('tabs')">Tabs</button>
         <button type="button" class="side-btn" id="side-apps" onclick="openPanel('apps')">Apps &amp; games</button>
         <button type="button" class="side-btn" id="side-banners" onclick="openPanel('banners')">Banners</button>
@@ -795,6 +805,24 @@
               <button type="button" class="btn danger" onclick="clearLog()">Logboek wissen</button>
             </div>
             <div id="logList"></div>
+          </div>
+
+          <!-- Beheerders -->
+          <div id="sec-beheerders" style="display:none;">
+            <div id="adminManagerNotice"></div>
+            <div class="box-card">
+              <h4>Admin geven</h4>
+              <p class="admin-note">Vul een naam in en je krijgt een inlogcode voor die persoon. De code werkt alleen voor hem of haar en je kunt de rechten altijd weer intrekken.</p>
+              <div class="inline-row">
+                <input type="text" id="helperName" placeholder="Naam van de persoon">
+                <button type="button" class="btn pri" onclick="createHelper()">Inlogcode maken</button>
+              </div>
+              <div id="issuedCode"></div>
+            </div>
+            <div class="box-card">
+              <h4>Beheerders en wat ze doen</h4>
+              <div id="helperList"></div>
+            </div>
           </div>
 
           <!-- Tabs -->
@@ -897,6 +925,7 @@
             <div class="box-card">
               <h4>Online opslag</h4>
               <p class="admin-note" id="cloudStatus"></p>
+              <p class="admin-note" id="whoAmI"></p>
               <p class="admin-note">Alles wat je hier aanpast (games, banner, tabs, stijl, groepsstraf) wordt online bewaard en is zichtbaar op elk apparaat en elk account.</p>
               <div class="inline-row">
                 <button type="button" class="btn white" onclick="pushCloudButton()">Nu online zetten</button>
@@ -1002,6 +1031,14 @@
     // "https://jouw-project-default-rtdb.europe-west1.firebasedatabase.app"
     // Laat leeg ("") om alleen in deze browser op te slaan.
     const FIREBASE_DB_URL = "https://website-554d5-default-rtdb.europe-west1.firebasedatabase.app";
+
+    // ===== Inloggen met Firebase-accounts (nodig om anderen admin te kunnen geven) =====
+    // Vul deze twee in (zie de uitleg). Laat je ze leeg, dan werkt de oude admin-code nog.
+    const FIREBASE_API_KEY = "AIzaSyDm-sRNY6AJ0VD5GbiG9vh1KVgVd1BdG7A";   // Web API Key uit Firebase > Projectinstellingen
+    const MASTER_EMAIL = "farispariskd@gmail.com";       // het e-mailadres van jouw Firebase-gebruiker
+    const MASTER_NAME = "Irfan";   // jouw naam in het logboek
+    const HELPER_DOMAIN = "irfanhub.app";
+    const AUTH_ON = Boolean(FIREBASE_DB_URL && FIREBASE_API_KEY && MASTER_EMAIL);
     const STORAGE_KEY = "custom_hub_items_v1";
     const FAV_KEY = "irfanhub_favs_v1";
     const GOTD_KEY = "irfanhub_gotd_v1";
@@ -1025,7 +1062,8 @@
     const BANNER_COLORS = ["#1f6fe5", "#ef4444", "#ec4899", "#a855f7", "#22c55e", "#f59e0b"];
     const SECTION_INFO = {
       mensen:       ["Mensen", "Wie er niet meer binnen mag, en tijdelijke groepsstraf"],
-      logboek:      ["Logboek", "Alles wat je als beheerder hebt gedaan"],
+      logboek:      ["Logboek", "Alles wat beheerders hebben gedaan, met naam en tijd"],
+      beheerders:   ["Beheerders", "Geef anderen admin, bekijk wat ze doen en neem het weer af"],
       tabs:         ["Tabs", "Geef de tabs een eigen naam en kies welke zichtbaar zijn"],
       apps:         ["Apps & games", "Alles op één plek: openen, bewerken, verbergen en verwijderen"],
       banners:      ["Banners", "Een balk bovenaan de hub"],
@@ -1075,9 +1113,11 @@
     })();
 
     function logAction(text) {
-      adminLog.unshift({ t: Date.now(), text });
+      const entry = { t: Date.now(), who: adminName, text };
+      adminLog.unshift(entry);
       adminLog = adminLog.slice(0, 100);
       localStorage.setItem(LOG_KEY, JSON.stringify(adminLog));
+      if (AUTH_ON && isAdmin) postLogEntry(entry);
       // Elke beheerdersactie wordt ook online opgeslagen (als dat aan staat)
       scheduleCloudPush();
     }
@@ -1114,9 +1154,37 @@
       document.getElementById("authModal").classList.remove("open");
     }
 
-    function checkAdminCode(e) {
+    async function checkAdminCode(e) {
       e.preventDefault();
-      if (document.getElementById("adminCodeInput").value.trim() === ADMIN_CODE) {
+      const code = document.getElementById("adminCodeInput").value.trim();
+      const errEl = document.getElementById("authErr");
+      errEl.style.display = "none";
+
+      if (AUTH_ON) {
+        try {
+          await authLogin(code);
+        } catch (err) {
+          errEl.textContent = err.message === "NO_ACCESS"
+            ? "Dit account heeft geen adminrechten (meer)."
+            : "Verkeerde code. Probeer opnieuw.";
+          errEl.style.display = "block";
+          return;
+        }
+        enterAdminMode();
+        const remember = document.getElementById("rememberAdmin");
+        if (remember && remember.checked) {
+          localStorage.setItem(ADMIN_REMEMBER_KEY, "1");
+          saveAuthSession();
+        }
+        closeAuthModal();
+        checkLockout();
+        render();
+        logAction("Ingelogd");
+        loadLog();
+        return;
+      }
+
+      if (code === ADMIN_CODE) {
         isAdmin = true;
         document.body.classList.add("admin-unlocked");
         const remember = document.getElementById("rememberAdmin");
@@ -1126,14 +1194,20 @@
         closeAuthModal();
         checkLockout();
       } else {
-        document.getElementById("authErr").style.display = "block";
+        errEl.textContent = "Verkeerde code. Probeer opnieuw.";
+        errEl.style.display = "block";
       }
     }
 
     function lockAdmin() {
       isAdmin = false;
+      isMaster = false;
+      adminName = "Beheerder";
+      lastIssuedCode = null;
       localStorage.removeItem(ADMIN_REMEMBER_KEY);
+      clearAuthSession();
       document.body.classList.remove("admin-unlocked");
+      document.body.classList.remove("is-master");
       closePanel();
       closeEditModal();
       checkLockout();
@@ -1144,6 +1218,7 @@
       let openForm = false;
       if (section === "add") { section = "apps"; openForm = true; }
       if (!SECTION_INFO[section]) section = "mensen";
+      if (section === "beheerders" && !isMaster) section = "mensen";
 
       document.getElementById("adminPanelModal").classList.add("open");
       document.getElementById("panelHeading").textContent = SECTION_INFO[section][0];
@@ -1154,7 +1229,8 @@
       });
 
       if (section === "mensen") { renderBans(); renderStats(); }
-      if (section === "logboek") renderLog();
+      if (section === "logboek") { renderLog(); loadLog(); }
+      if (section === "beheerders") renderHelperList();
       if (section === "tabs") renderTabsEditor();
       if (section === "apps") { renderAdminItems(); toggleAddForm(openForm); }
       if (section === "banners") {
@@ -1163,6 +1239,9 @@
       }
       if (section === "stijl") populateGotdSelect();
       if (section === "instellingen") {
+        document.getElementById("whoAmI").textContent = AUTH_ON
+          ? `Ingelogd als ${adminName}${isMaster ? " (hoofdbeheerder)" : ""}.`
+          : "Je gebruikt de oude admin-code. Stel de Firebase-login in om anderen admin te geven.";
         document.getElementById("searchToggle").checked = localStorage.getItem(SEARCH_KEY) !== "0";
         if (!CLOUD_ON) setCloudStatus("Staat uit. Plak de link van je Firebase-database bij FIREBASE_DB_URL bovenaan het script in index.html.");
       }
@@ -1194,14 +1273,19 @@
       }
       el.innerHTML = adminLog.map(entry => {
         const d = new Date(entry.t).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-        return `<div class="log-row"><span>${escapeHtml(d)}</span><span style="color:#e5e7eb;">${escapeHtml(entry.text)}</span></div>`;
+        const who = entry.who ? `<span style="color:#93c5fd;min-width:80px;flex-shrink:0;font-weight:700;">${escapeHtml(entry.who)}</span>` : "";
+        return `<div class="log-row"><span>${escapeHtml(d)}</span>${who}<span style="color:#e5e7eb;">${escapeHtml(entry.text)}</span></div>`;
       }).join("");
     }
 
-    function clearLog() {
+    async function clearLog() {
+      if (AUTH_ON && !isMaster) return alert("Alleen de hoofdbeheerder kan het logboek wissen.");
       if (!confirm("Logboek wissen?")) return;
       adminLog = [];
       localStorage.setItem(LOG_KEY, JSON.stringify(adminLog));
+      if (AUTH_ON) {
+        try { await dbFetch("/log", { method: "DELETE" }); } catch (_) {}
+      }
       renderLog();
     }
 
@@ -1218,6 +1302,15 @@
         b.textContent = c.label;
         b.onclick = () => setTab(k);
         nav.appendChild(b);
+        if (k === "all") {
+          const link = document.createElement("a");
+          link.className = "pill-btn";
+          link.href = "https://jimfun.com";
+          link.target = "_blank";
+          link.rel = "noopener";
+          link.textContent = "↗ Jimfun";
+          nav.appendChild(link);
+        }
       });
       if (currentTab !== "all" && tabsConfig[currentTab] && !tabsConfig[currentTab].visible) setTab("all");
     }
@@ -1998,6 +2091,312 @@
     let cloudTimer = null;
     let lastCloudJson = "";
 
+    // ===== Inloggen en beheerders (Firebase Authentication via REST) =====
+    const AUTH_SESSION_KEY = "irfanhub_auth_session_v1";
+    let adminName = "Beheerder";
+    let adminUid = "";
+    let isMaster = false;
+    let authToken = "";
+    let authRefresh = "";
+    let authExpiry = 0;
+    let lastIssuedCode = null;
+
+    function authErrorText(data, fallback) {
+      return (data && data.error && data.error.message) || fallback;
+    }
+
+    async function authSignIn(email, password) {
+      const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + encodeURIComponent(FIREBASE_API_KEY), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, returnSecureToken: true })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(authErrorText(data, "Inloggen mislukt"));
+      authToken = data.idToken;
+      authRefresh = data.refreshToken;
+      authExpiry = Date.now() + (Number(data.expiresIn) - 60) * 1000;
+      adminUid = data.localId;
+    }
+
+    async function authRefreshToken() {
+      const res = await fetch("https://securetoken.googleapis.com/v1/token?key=" + encodeURIComponent(FIREBASE_API_KEY), {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(authRefresh)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(authErrorText(data, "Sessie verlopen"));
+      authToken = data.id_token;
+      authRefresh = data.refresh_token;
+      authExpiry = Date.now() + (Number(data.expires_in) - 60) * 1000;
+      adminUid = data.user_id || adminUid;
+      if (localStorage.getItem(AUTH_SESSION_KEY)) saveAuthSession();
+    }
+
+    async function authGetToken() {
+      if (!authToken && !authRefresh) throw new Error("Niet ingelogd");
+      if (Date.now() >= authExpiry) await authRefreshToken();
+      return authToken;
+    }
+
+    function saveAuthSession() {
+      localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ refresh: authRefresh, isMaster, name: adminName, uid: adminUid }));
+    }
+
+    function clearAuthSession() {
+      localStorage.removeItem(AUTH_SESSION_KEY);
+      authToken = "";
+      authRefresh = "";
+      authExpiry = 0;
+    }
+
+    async function dbFetch(path, options = {}) {
+      const token = await authGetToken();
+      const hasBody = options.body !== undefined;
+      return fetch(CLOUD_BASE + path + ".json?auth=" + encodeURIComponent(token) + (options.query ? "&" + options.query : ""), {
+        method: options.method || "GET",
+        headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+        body: hasBody ? JSON.stringify(options.body) : undefined,
+        cache: "no-store"
+      });
+    }
+
+    function codeToCredentials(code) {
+      const i = code.indexOf("~");
+      if (i > 0) {
+        return { email: code.slice(0, i).trim().toLowerCase() + "@" + HELPER_DOMAIN, password: code.slice(i + 1), helper: true };
+      }
+      return { email: MASTER_EMAIL, password: code, helper: false };
+    }
+
+    async function authLogin(code) {
+      const cred = codeToCredentials(code);
+      await authSignIn(cred.email, cred.password);
+      if (!cred.helper) {
+        isMaster = true;
+        adminName = MASTER_NAME;
+        return;
+      }
+      isMaster = false;
+      const res = await dbFetch("/admins/" + adminUid);
+      const rec = res.ok ? await res.json() : null;
+      if (!rec || rec.active !== true) throw new Error("NO_ACCESS");
+      adminName = rec.name || "Beheerder";
+    }
+
+    function enterAdminMode() {
+      isAdmin = true;
+      document.body.classList.add("admin-unlocked");
+      document.body.classList.toggle("is-master", isMaster);
+    }
+
+    async function restoreAuthSession() {
+      if (localStorage.getItem(ADMIN_REMEMBER_KEY) !== "1") return;
+      let sess = null;
+      try { sess = JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || "null"); } catch (_) {}
+      if (!sess || !sess.refresh) return;
+      try {
+        authRefresh = sess.refresh;
+        await authRefreshToken();
+        isMaster = Boolean(sess.isMaster);
+        adminName = sess.name || "Beheerder";
+        if (!isMaster) {
+          const res = await dbFetch("/admins/" + adminUid);
+          const rec = res.ok ? await res.json() : null;
+          if (!rec || rec.active !== true) throw new Error("NO_ACCESS");
+          adminName = rec.name || adminName;
+        }
+        enterAdminMode();
+        saveAuthSession();
+        checkLockout();
+        render();
+        loadLog();
+      } catch (_) {
+        clearAuthSession();
+        localStorage.removeItem(ADMIN_REMEMBER_KEY);
+      }
+    }
+
+    function forceRevoked() {
+      lockAdmin();
+      alert("Je adminrechten zijn ingetrokken door de hoofdbeheerder.");
+    }
+
+    async function checkAdminAccess() {
+      if (!AUTH_ON || !isAdmin || isMaster) return;
+      try {
+        const res = await dbFetch("/admins/" + adminUid);
+        if (res.ok) {
+          const rec = await res.json();
+          if (!rec || rec.active !== true) forceRevoked();
+        } else if (res.status === 401 || res.status === 403) {
+          forceRevoked();
+        }
+      } catch (_) {}
+    }
+
+    async function postLogEntry(entry) {
+      try {
+        const res = await dbFetch("/log", { method: "POST", body: entry });
+        if (res.status === 401 || res.status === 403) checkAdminAccess();
+      } catch (_) {}
+    }
+
+    async function loadLog() {
+      if (!AUTH_ON || !isAdmin) return;
+      try {
+        const res = await dbFetch("/log", { query: "orderBy=%22%24key%22&limitToLast=100" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data) return;
+        adminLog = Object.values(data)
+          .filter(e => e && typeof e.t === "number" && typeof e.text === "string")
+          .sort((a, b) => b.t - a.t)
+          .slice(0, 100);
+        localStorage.setItem(LOG_KEY, JSON.stringify(adminLog));
+        if (document.getElementById("sec-logboek").style.display === "block") renderLog();
+        if (document.getElementById("sec-beheerders").style.display === "block") renderHelperList();
+      } catch (_) {}
+    }
+
+    function adminTick() {
+      if (!AUTH_ON || !isAdmin || document.hidden) return;
+      loadCloud();
+      loadLog();
+      checkAdminAccess();
+    }
+
+    function randomText(len) {
+      const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+      const bytes = new Uint8Array(len);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+    }
+
+    function timeAgo(t) {
+      const m = Math.round((Date.now() - t) / 60000);
+      if (m < 1) return "zojuist";
+      if (m < 60) return m + " min geleden";
+      const h = Math.round(m / 60);
+      if (h < 24) return h + " uur geleden";
+      return Math.round(h / 24) + " dagen geleden";
+    }
+
+    async function createHelper() {
+      if (!isMaster) return;
+      if (!AUTH_ON) return alert("Stel eerst de Firebase-login in (zie de uitleg).");
+      const input = document.getElementById("helperName");
+      const name = input.value.trim();
+      if (!name) return alert("Vul eerst een naam in.");
+      const base = name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "").slice(0, 12) || "admin";
+      const id = base + "-" + randomText(3);
+      const password = randomText(10);
+      try {
+        const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + encodeURIComponent(FIREBASE_API_KEY), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: id + "@" + HELPER_DOMAIN, password, returnSecureToken: true })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(authErrorText(data, "Account maken mislukt"));
+        const put = await dbFetch("/admins/" + data.localId, { method: "PUT", body: { name, id, active: true, created: Date.now() } });
+        if (!put.ok) throw new Error("Opslaan mislukt (HTTP " + put.status + "). Controleer de Rules.");
+        lastIssuedCode = { name, code: id + "~" + password };
+        input.value = "";
+        logAction(`Admin gegeven aan ${name}`);
+        renderHelperList();
+      } catch (err) {
+        alert("Admin geven mislukt: " + err.message);
+      }
+    }
+
+    async function setHelperActive(uid, name, active) {
+      if (!isMaster) return;
+      if (!active && !confirm(`Adminrechten van ${name} intrekken?`)) return;
+      try {
+        const res = await dbFetch("/admins/" + uid, { method: "PATCH", body: { active } });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        logAction(active ? `Adminrechten van ${name} hersteld` : `Adminrechten van ${name} ingetrokken`);
+        renderHelperList();
+      } catch (err) {
+        alert("Mislukt: " + err.message);
+      }
+    }
+
+    async function deleteHelper(uid, name) {
+      if (!isMaster) return;
+      if (!confirm(`${name} helemaal verwijderen uit de lijst?`)) return;
+      try {
+        const res = await dbFetch("/admins/" + uid, { method: "DELETE" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        logAction(`${name} verwijderd uit de beheerders`);
+        renderHelperList();
+      } catch (err) {
+        alert("Mislukt: " + err.message);
+      }
+    }
+
+    function copyIssuedCode() {
+      if (!lastIssuedCode) return;
+      navigator.clipboard.writeText(lastIssuedCode.code).then(
+        () => alert("Code gekopieerd."),
+        () => prompt("Kopieer deze code:", lastIssuedCode.code)
+      );
+    }
+
+    async function renderHelperList() {
+      const notice = document.getElementById("adminManagerNotice");
+      const listEl = document.getElementById("helperList");
+      const issued = document.getElementById("issuedCode");
+      if (!AUTH_ON) {
+        notice.innerHTML = `<div class="box-card"><h4>Eerst de Firebase-login instellen</h4><p class="admin-note">Om anderen admin te geven moet je API-sleutel en e-mailadres invullen bovenaan het script (FIREBASE_API_KEY en MASTER_EMAIL). Zie de uitleg in de chat.</p></div>`;
+        listEl.innerHTML = "";
+        return;
+      }
+      notice.innerHTML = "";
+      issued.innerHTML = lastIssuedCode ? `
+        <div class="issued">
+          <div>Inlogcode voor <b>${escapeHtml(lastIssuedCode.name)}</b>:</div>
+          <code>${escapeHtml(lastIssuedCode.code)}</code>
+          <div class="admin-note" style="margin:6px 0 0;">Geef deze code aan die persoon. Je ziet hem alleen nu; verlies je hem, trek dan de rechten in en maak een nieuwe.</div>
+          <div class="inline-row" style="margin-top:8px;"><button type="button" class="btn" onclick="copyIssuedCode()">Kopieer code</button></div>
+        </div>` : "";
+      try {
+        const res = await dbFetch("/admins");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = (await res.json()) || {};
+        const rows = Object.entries(data).filter(([, r]) => r && typeof r.name === "string");
+        if (!rows.length) {
+          listEl.innerHTML = `<div class="empty-note">Nog geen andere beheerders.</div>`;
+          return;
+        }
+        listEl.innerHTML = rows.map(([uid, r]) => {
+          const last = adminLog.find(e => e.who === r.name);
+          const status = r.active === true
+            ? `<span class="chip ok">Actief</span>`
+            : `<span class="chip off">Ingetrokken</span>`;
+          const lastTxt = last
+            ? `Laatst: ${escapeHtml(last.text)} · ${escapeHtml(timeAgo(last.t))}`
+            : "Nog niets gedaan";
+          const toggle = r.active === true
+            ? `<button type="button" class="btn danger" onclick="setHelperActive('${escapeHtml(uid)}', '${escapeHtml(r.name).replace(/'/g, "&#39;")}', false)">Admin intrekken</button>`
+            : `<button type="button" class="btn pri" onclick="setHelperActive('${escapeHtml(uid)}', '${escapeHtml(r.name).replace(/'/g, "&#39;")}', true)">Weer activeren</button>`;
+          return `
+            <div class="item-row">
+              <div class="item-info">
+                <strong>${escapeHtml(r.name)} ${status}</strong>
+                <small>${lastTxt}</small>
+              </div>
+              ${toggle}
+              <button type="button" class="icon-btn del-btn" title="Verwijderen" onclick="deleteHelper('${escapeHtml(uid)}', '${escapeHtml(r.name).replace(/'/g, "&#39;")}')">✕</button>
+            </div>`;
+        }).join("");
+      } catch (err) {
+        listEl.innerHTML = `<div class="empty-note">Lijst laden mislukt (${escapeHtml(err.message)}). Controleer de Rules.</div>`;
+      }
+    }
+
     function setCloudStatus(text) {
       ["cloudStatus", "cloudChip"].forEach(id => {
         const el = document.getElementById(id);
@@ -2070,6 +2469,7 @@
 
     async function loadCloud() {
       if (!CLOUD_ON) return;
+      if (cloudBusy || cloudTimer) return;
       try {
         const res = await fetch(CLOUD_BASE + "/hub/public.json", { cache: "no-store" });
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -2098,18 +2498,25 @@
     async function pushCloudNow() {
       if (!CLOUD_ON || !isAdmin) return false;
       if (cloudBusy) { cloudDirty = true; return false; }
+      cloudTimer = null;
       cloudBusy = true;
       let ok = false;
       try {
         setCloudStatus("☁️ Opslaan...");
-        const res = await fetch(CLOUD_BASE + "/hub.json", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key: ADMIN_CODE, public: buildPublicState() })
-        });
+        let res;
+        if (AUTH_ON) {
+          res = await dbFetch("/hub", { method: "PUT", body: { public: buildPublicState() } });
+        } else {
+          res = await fetch(CLOUD_BASE + "/hub.json", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: ADMIN_CODE, public: buildPublicState() })
+          });
+        }
         if (!res.ok) {
+          if (AUTH_ON && (res.status === 401 || res.status === 403)) checkAdminAccess();
           throw new Error(res.status === 401 || res.status === 403
-            ? "geen toestemming. Controleer de regels en je admin-code"
+            ? "geen toestemming. Controleer de regels en je login"
             : "HTTP " + res.status);
         }
         ok = true;
@@ -2140,7 +2547,9 @@
       document.documentElement.style.setProperty("--acc", savedAccent);
       document.getElementById("accentPicker").value = savedAccent;
     }
-    if (localStorage.getItem(ADMIN_REMEMBER_KEY) === "1") {
+    if (AUTH_ON) {
+      restoreAuthSession();
+    } else if (localStorage.getItem(ADMIN_REMEMBER_KEY) === "1") {
       isAdmin = true;
       document.body.classList.add("admin-unlocked");
     }
@@ -2198,6 +2607,7 @@
     // Online opslag: haal de nieuwste games op, en ververs elke 20 sec voor bezoekers
     loadCloud();
     setInterval(() => { if (!isAdmin && !document.hidden) loadCloud(); }, 20000);
+    setInterval(adminTick, 20000);
   </script>
 </body>
 </html>
