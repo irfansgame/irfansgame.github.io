@@ -637,6 +637,14 @@
     .header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .pill-nav { position: static; transform: none; }
     .srch { margin-left: 0; }
+
+    /* Voorvertoning van de gekozen afbeelding */
+    .img-preview {
+      width: 96px; height: 96px; border-radius: 20px; margin-top: 10px;
+      background: #111 center / cover no-repeat;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 2.6rem;
+    }
   </style>
 </head>
 <body>
@@ -819,7 +827,8 @@
                 <label for="itemFile">Afbeelding (bestand)</label>
                 <input type="file" id="itemFile" accept="image/*" onchange="handleFileSelect(event)">
                 <span class="sub-label">...of afbeelding-link / emoji</span>
-                <input type="text" id="itemIcon" placeholder="https://... of 🎮">
+                <input type="text" id="itemIcon" placeholder="https://... of 🎮" oninput="updateAddPreview()">
+                <div class="img-preview" id="addPreview" style="display:none;"></div>
               </div>
 
               <div class="field" id="linkField">
@@ -940,7 +949,8 @@
         <label for="editFile">Afbeelding (bestand)</label>
         <input type="file" id="editFile" accept="image/*" onchange="handleEditFileSelect(event)">
         <span class="sub-label" id="editIconNote">...of afbeelding-link / emoji</span>
-        <input type="text" id="editIcon" placeholder="https://... of 🎮">
+        <input type="text" id="editIcon" placeholder="https://... of 🎮" oninput="updateEditPreview()">
+        <div class="img-preview" id="editPreview" style="display:none;"></div>
       </div>
 
       <div class="field" id="editLinkField">
@@ -1154,6 +1164,7 @@
 
     function toggleAddForm(show) {
       document.getElementById("addForm").style.display = show ? "block" : "none";
+      if (show) updateAddPreview();
     }
 
     function renderStats() {
@@ -1405,10 +1416,12 @@
       const file = event.target.files && event.target.files[0];
       if (!file) {
         editUploadedImageData = "";
+        updateEditPreview();
         return;
       }
       readImageSmall(file, (data) => {
         editUploadedImageData = data;
+        updateEditPreview();
         document.getElementById("editIconNote").textContent = "Nieuwe afbeelding gekozen: " + file.name;
       });
     }
@@ -1436,6 +1449,7 @@
       document.getElementById("editHtml").value = item.html || "";
 
       setEditMode(item.type === "html" ? "html" : "link");
+      updateEditPreview();
       document.getElementById("editModal").classList.add("open");
     }
 
@@ -1517,13 +1531,37 @@
       render();
     }
 
+    function showPreview(id, icon) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!icon) { el.style.display = "none"; return; }
+      el.style.display = "flex";
+      const isImg = icon.startsWith("http") || icon.startsWith("data:image/");
+      if (isImg) {
+        el.style.backgroundImage = `url('${cssUrl(icon)}')`;
+        el.textContent = "";
+      } else {
+        el.style.backgroundImage = "";
+        el.textContent = icon;
+      }
+    }
+
+    function updateAddPreview() {
+      showPreview("addPreview", uploadedImageData || document.getElementById("itemIcon").value.trim());
+    }
+
+    function updateEditPreview() {
+      showPreview("editPreview", editUploadedImageData || document.getElementById("editIcon").value.trim() || editExistingIcon);
+    }
+
     function handleFileSelect(event) {
       const file = event.target.files && event.target.files[0];
       if (!file) {
         uploadedImageData = "";
+        updateAddPreview();
         return;
       }
-      readImageSmall(file, (data) => { uploadedImageData = data; });
+      readImageSmall(file, (data) => { uploadedImageData = data; updateAddPreview(); });
     }
 
     function addBan() {
@@ -1710,6 +1748,7 @@
       document.getElementById("itemUrl").value = "";
       document.getElementById("itemHtml").value = "";
       uploadedImageData = "";
+      updateAddPreview();
       toggleAddForm(false);
       logAction(`Toegevoegd: ${title}`);
       render();
