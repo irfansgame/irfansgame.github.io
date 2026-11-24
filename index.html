@@ -1814,6 +1814,15 @@
     }
 
     function launchItem(item) {
+      // Websites die niet in de hub passen (bijv. Google Sites) openen meteen in een nieuw tabblad
+      if (isNoEmbedItem(item)) {
+        const w = window.open(item.url, "_blank");
+        if (w) {
+          try { w.opener = null; } catch (_) {}
+          return;
+        }
+        // Pop-up geblokkeerd: val terug op de speler met de uitleg en de knop
+      }
       currentPlayerItem = item;
       document.getElementById("playerHint").classList.toggle("show", isNoEmbedItem(item));
       document.getElementById("playerTitle").textContent = item.title;
