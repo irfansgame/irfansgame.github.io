@@ -631,6 +631,12 @@
       .stat-grid { grid-template-columns: 1fr; }
       .admin-head, .admin-body { padding-left: 16px; padding-right: 16px; }
     }
+
+    /* Header: logo + beheerknoppen links, menu in het midden, zoeken rechts */
+    header.top { justify-content: space-between; flex-wrap: wrap; gap: 14px 18px; }
+    .header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .pill-nav { position: static; transform: none; }
+    .srch { margin-left: 0; }
   </style>
 </head>
 <body>
@@ -651,20 +657,20 @@
     </div>
 
     <header class="top">
-      <button class="brand" onclick="resetView()" ondblclick="openAuthModal()" title="Dubbelklik voor code-login">
-        <img src="logo.png" alt="ig. logo" class="brand-logo" onerror="this.style.display='none'">
-        <span>IrfanGames</span>
-      </button>
-      <nav class="pill-nav" id="pillNav"></nav>
-      <div class="header-right">
+      <div class="header-left">
+        <button class="brand" onclick="resetView()" ondblclick="openAuthModal()" title="Dubbelklik voor code-login">
+          <img src="logo.png" alt="ig. logo" class="brand-logo" onerror="this.style.display='none'">
+          <span>IrfanGames</span>
+        </button>
         <button class="btn white admin-only" onclick="openPanel('add')">+ Toevoegen</button>
         <button class="btn admin-only" onclick="openPanel('mensen')">⚙️ Beheer</button>
         <button class="btn admin-only" onclick="lockAdmin()">🔒 Klaar</button>
-        <label class="srch">
-          <span style="margin-right:8px;">🔍</span>
-          <input type="search" id="search" placeholder="Zoeken..." oninput="render()">
-        </label>
       </div>
+      <nav class="pill-nav" id="pillNav"></nav>
+      <label class="srch">
+        <span style="margin-right:8px;">🔍</span>
+        <input type="search" id="search" placeholder="Zoeken..." oninput="render()">
+      </label>
     </header>
 
     <!-- Game van de dag -->
