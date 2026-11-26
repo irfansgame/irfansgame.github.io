@@ -810,6 +810,39 @@
       background: #050914; border: 1px solid var(--border); border-radius: 14px; color: #fff;
     }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ===== SVG-iconen ===== */
+    .ico { width: 22px; height: 22px; fill: currentColor; flex-shrink: 0; vertical-align: middle; }
+    .ico-img { width: 24px; height: 24px; object-fit: contain; vertical-align: middle; border-radius: 4px; }
+    h2 .ico, h2 .ico-img { width: 1.05em; height: 1.05em; margin-right: 2px; }
+    .pill-btn.icon-only .ico, .pill-btn.icon-only .ico-img { width: 22px; height: 22px; }
+    .pill-btn.jf { width: 58px; }
+    .jf-logo { width: 34px; height: 21px; fill: currentColor; }
+    .tab-icon-btn { display: flex; align-items: center; justify-content: center; }
+    .tab-icon-btn .ico, .tab-icon-btn .ico-img { width: 26px; height: 26px; }
+    .tab-icon-btn small { font-size: 0.7rem; color: #94a3b8; }
+    #iconModal { z-index: 80; }
+    .icon-dialog { max-width: 760px; }
+    .icon-dialog h3 { font-size: 1.7rem; font-weight: 800; }
+    .icon-dialog p { color: #cbd5e1; font-size: 0.92rem; }
+    .icon-upload-row { display: flex; align-items: center; gap: 14px; margin: 14px 0; flex-wrap: wrap; }
+    .icon-upload-btn {
+      padding: 22px 26px; border-radius: 16px; border: 1px dashed rgba(255,255,255,0.3);
+      background: #141414; color: #fff; font-weight: 800; cursor: pointer; font-size: 1rem;
+    }
+    .icon-upload-btn:hover { border-color: var(--acc); }
+    .icon-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+    .icon-tile {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      min-height: 76px; padding: 10px 4px; border-radius: 16px; cursor: pointer;
+      background: #141414; border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 0.78rem;
+    }
+    .icon-tile .ico, .icon-tile .ico-img { width: 28px; height: 28px; }
+    .icon-tile span { color: #d1d5db; }
+    .icon-tile b { font-size: 1.05rem; }
+    .icon-tile:hover { background: #1f1f1f; }
+    .icon-tile.active { border-color: #fff; background: #262626; }
+    @media (max-width: 640px) { .icon-tiles { grid-template-columns: repeat(4, 1fr); } }
   </style>
 </head>
 <body>
@@ -1175,6 +1208,23 @@
     </div>
   </div>
 
+  <!-- Icoon kiezen -->
+  <div class="overlay" id="iconModal" onclick="if (event.target === this) closeIconPicker()">
+    <div class="dialog icon-dialog">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+        <h3 style="margin:0;">Kies een icoon</h3>
+        <button type="button" class="admin-x" onclick="closeIconPicker()" title="Sluiten">✕</button>
+      </div>
+      <div class="icon-upload-row">
+        <label class="icon-upload-btn">Eigen icoon uploaden
+          <input type="file" accept="image/*" style="display:none;" onchange="handleTabIconUpload(event)">
+        </label>
+        <p style="flex:1;min-width:200px;margin:0;">PNG, JPG, WebP of SVG. Een vierkant plaatje met een doorzichtige achtergrond ziet er het best uit.</p>
+      </div>
+      <div class="icon-tiles" id="iconGrid"></div>
+    </div>
+  </div>
+
   <!-- Player Modal -->
   <div class="player" id="player">
     <div class="player-bar">
@@ -1225,20 +1275,88 @@
     const SEARCH_KEY = "irfanhub_search_visible_v1";
 
     const DEFAULT_TAB_LIST = [
-      { id: "all",   name: "Alles",      icon: "🏠", visible: true, type: "all",     builtin: true },
-      { id: "games", name: "Games",      icon: "🎮", visible: true, type: "content", builtin: true },
-      { id: "apps",  name: "Apps",       icon: "🧩", visible: true, type: "content", builtin: true },
-      { id: "edu",   name: "Educatie",   icon: "🎓", visible: true, type: "edu",     builtin: true },
-      { id: "favs",  name: "Favorieten", icon: "❤️", visible: true, type: "favs",    builtin: true }
+      { id: "all",   name: "Alles",      icon: "svg:home", visible: true, type: "all",     builtin: true },
+      { id: "games", name: "Games",      icon: "svg:controller", visible: true, type: "content", builtin: true },
+      { id: "apps",  name: "Apps",       icon: "svg:apps", visible: true, type: "content", builtin: true },
+      { id: "edu",   name: "Educatie",   icon: "svg:learn", visible: true, type: "edu",     builtin: true },
+      { id: "favs",  name: "Favorieten", icon: "svg:heart", visible: true, type: "favs",    builtin: true }
     ];
     const BUILTIN_TYPES = { all: "all", favs: "favs", edu: "edu" };
-    const ICON_CHOICES = [
-      "🏠","🎮","🧩","🎓","❤️","⭐","🔥","⚡","🎯","🏆",
-      "🎲","🕹️","👾","🚗","🏎️","⚽","🏀","🎵","🎧","🎬",
-      "📺","📚","📖","✏️","🧠","🔬","🧪","🌍","🗺️","🚀",
-      "🛠️","💡","🎨","📷","💬","📱","💻","🍕","🍔","☕",
-      "🐱","🐶","🌈","☀️","🌙","❄️","🌸","🧸","🎁","🔒"
+    // ===== Iconen (SVG) voor de tabs =====
+    const sq = (x, y) => `<rect x="${x}" y="${y}" width="4.4" height="4.4" rx="1.2"/>`;
+    const ICON_LIB = [
+      ["home", "Home", '<path d="M12 2.8 2 11.5h2.8V21h5.4v-6h3.6v6h5.4v-9.5H22z"/>'],
+      ["controller", "Controller", '<path fill-rule="evenodd" d="M7.2 6.5h9.6a5.2 5.2 0 0 1 5 6.6l-.9 3.3a2.7 2.7 0 0 1-4.5 1.1L14.4 15H9.6l-2 2.5a2.7 2.7 0 0 1-4.5-1.1l-.9-3.3a5.2 5.2 0 0 1 5-6.6zM7 9.2v1.5H5.5v1.6H7v1.5h1.6v-1.5h1.5v-1.6H8.6V9.2zM16.9 9.4a1 1 0 1 0 0 2 1 1 0 0 0 0-2zM19.3 11.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>'],
+      ["joystick", "Joystick", '<circle cx="12" cy="5" r="3.2"/><rect x="10.8" y="7" width="2.4" height="6"/><rect x="3" y="14" width="18" height="6.5" rx="2"/>'],
+      ["handheld", "Handheld", '<path fill-rule="evenodd" d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1 2.5v6.5h8V4.5zM8.4 15.3v1h-1v1.2h1v1h1.2v-1h1v-1.2h-1v-1zM15.5 15.5a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8z"/>'],
+      ["search", "Zoeken", '<circle cx="10.5" cy="10.5" r="6.2" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="m15.2 15.2 5.6 5.6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>'],
+      ["info", "Info", '<path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 8.5h2.4v7h-2.4zM12 6.2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8z"/>'],
+      ["heart", "Favoriet", '<path d="M12 21.2C6 16.8 2.5 13.6 2.5 9.4A4.9 4.9 0 0 1 12 7.4a4.9 4.9 0 0 1 9.5 2c0 4.2-3.5 7.4-9.5 11.8z"/>'],
+      ["widgets", "Widgets", '<rect x="3" y="3" width="8" height="8" rx="2.2"/><rect x="13" y="3" width="8" height="8" rx="4"/><rect x="3" y="13" width="8" height="8" rx="4"/><rect x="13" y="13" width="8" height="8" rx="2.2"/>'],
+      ["apps", "Apps", [3, 9.8, 16.6].flatMap(y => [3, 9.8, 16.6].map(x => sq(x, y))).join("")],
+      ["learn", "Leren", '<path d="M12 3 .8 9 12 15l9-4.8V16h2V9z"/><path d="M5.5 13.6v3.9c0 1.6 3 3 6.5 3s6.5-1.4 6.5-3v-3.9L12 17z"/>'],
+      ["star", "Ster", '<path d="m12 2.2 2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.8l1.4-6.8L2.2 9.3l6.9-.8z"/>'],
+      ["trophy", "Beker", '<path d="M7 3h10v6a5 5 0 0 1-10 0zM7 5H3.5v2.2c0 2 1.5 3.6 3.6 3.8-.2-.5-.1-1-.1-1.6zM17 5h3.5v2.2c0 2-1.5 3.6-3.6 3.8.2-.5.1-1 .1-1.6z"/><rect x="11" y="13.5" width="2" height="4"/><rect x="7.5" y="17.5" width="9" height="3" rx="1"/>'],
+      ["music", "Muziek", '<path d="M9 3.5 20 2v14.2a3.2 3.2 0 1 1-2-3V6.2L11 7.2v11.3a3.2 3.2 0 1 1-2-3z"/>'],
+      ["film", "Film", '<path fill-rule="evenodd" d="M4 3h16a1.5 1.5 0 0 1 1.5 1.5v15A1.5 1.5 0 0 1 20 21H4a1.5 1.5 0 0 1-1.5-1.5v-15A1.5 1.5 0 0 1 4 3zm1 2v2.4h2.4V5zm11.6 0v2.4H19V5zM5 10.8v2.4h2.4v-2.4zm11.6 0v2.4H19v-2.4zM5 16.6V19h2.4v-2.4zm11.6 0V19H19v-2.4z"/>'],
+      ["brush", "Tekenen", '<path d="M20.5 3.5c-1-1-2.5-.9-3.6.2L10 10.6l3.4 3.4 6.9-6.9c1.1-1.1 1.2-2.6.2-3.6zM9.2 11.6C6.9 11.7 6 13.5 6 15c0 1.3-.7 2.4-2.3 3 1.2 1.7 3.2 2.5 5.1 2 2-.5 3.2-2.3 3.2-4.2 0-.7-.3-1.4-.8-1.9z"/>'],
+      ["code", "Code", '<path d="m8 6-6 6 6 6M16 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'],
+      ["chat", "Chat", '<path d="M4 3h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8l-5.5 4v-4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>'],
+      ["globe", "Wereld", '<g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><ellipse cx="12" cy="12" rx="4" ry="9.5"/><path d="M2.5 12h19"/></g>'],
+      ["bolt", "Bliksem", '<path d="M13.5 2 4.5 13.5h6L9.5 22l10-12.5h-6.3z"/>'],
+      ["fire", "Vuur", '<path fill-rule="evenodd" d="M12 2c.6 3-1.2 4.4-2.8 6.2C7.6 10 6 12 6 14.8A6 6 0 0 0 12 21a6 6 0 0 0 6-6.2c0-2.3-1-3.9-2.3-5.2-.4 1.3-1 2-1.8 2.4.5-3.5-.4-6.8-1.9-10zm0 11c1.4 1.3 2.2 2.2 2.2 3.5a2.2 2.2 0 0 1-4.4 0c0-1.2.8-2.2 2.2-3.5z"/>'],
+      ["rocket", "Raket", '<path fill-rule="evenodd" d="M12 2c3.5 2 5.5 5.8 5.5 9.5 0 1.3-.2 2.5-.6 3.7H7.1c-.4-1.2-.6-2.4-.6-3.7C6.5 7.8 8.5 4 12 2zm0 5.2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM6.4 14.5 4 17.8l.6 3 2.8-1.2zm11.2 0 2.4 3.3-.6 3-2.8-1.2zM10.3 17h3.4L12 22z"/>'],
+      ["puzzle", "Puzzel", '<path d="M10 3a2 2 0 0 1 4 0v1.5h4.5V9H20a2 2 0 0 1 0 4h-1.5v7.5H14V19a2 2 0 0 0-4 0v1.5H5.5V13H7a2 2 0 0 0 0-4H5.5V4.5H10z"/>'],
+      ["car", "Auto", '<path fill-rule="evenodd" d="M5.2 5h13.6c.7 0 1.3.4 1.6 1.1L22 11v7.5a1 1 0 0 1-1 1h-2.2a1 1 0 0 1-1-1V17H6.2v1.5a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V11l1.6-4.9C3.9 5.4 4.5 5 5.2 5zM5 11h14l-1-3.4H6zm1.5 3.2a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8zm11 0a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8z"/>'],
+      ["ball", "Bal", '<g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="m12 8 3.8 2.8-1.4 4.4H9.6l-1.4-4.4z"/><path d="M12 8V2.6M15.8 10.8l5.3-1.7M14.4 15.2l3.3 4.5M9.6 15.2l-3.3 4.5M8.2 10.8 2.9 9.1"/></g>'],
+      ["crown", "Kroon", '<path d="M3 8.5 7.5 12 12 5l4.5 7L21 8.5 19.5 18h-15zM5.5 19.6h13V21.5h-13z"/>'],
+      ["ghost", "Spook", '<path fill-rule="evenodd" d="M12 2.5a7.5 7.5 0 0 0-7.5 7.5v11.5l2.5-2.2 2.5 2.2 2.5-2.2 2.5 2.2 2.5-2.2 2.5 2.2V10A7.5 7.5 0 0 0 12 2.5zM9.3 8.6a1.5 1.8 0 1 0 0 3.6 1.5 1.8 0 0 0 0-3.6zM14.7 8.6a1.5 1.8 0 1 0 0 3.6 1.5 1.8 0 0 0 0-3.6z"/>'],
+      ["sword", "Zwaard", '<path d="M21.5 2.5h-6l-8 8 5.5 5.5 8-8z"/><path d="m5.4 13 5.6 5.6-1.6 1.6L3.8 14.6z"/><path d="m5 17.5 1.5 1.5-2.7 2.7a1.06 1.06 0 0 1-1.5-1.5z"/>'],
+      ["shield", "Schild", '<path d="M12 2 4 5v6.5c0 5 3.4 8.6 8 10.5 4.6-1.9 8-5.5 8-10.5V5z"/>'],
+      ["clock", "Klok", '<path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.1 4.5h2.2v5.2l3.6 2.1-1.1 1.9-4.7-2.8z"/>'],
+      ["calendar", "Kalender", '<path fill-rule="evenodd" d="M7 2h2v2.5h6V2h2v2.5h2.5A1.5 1.5 0 0 1 21 6v14.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 20.5V6a1.5 1.5 0 0 1 1.5-1.5H7zM5 9.5v10h14v-10z"/>'],
+      ["camera", "Camera", '<path fill-rule="evenodd" d="M8.5 3 7 5.5H4A2 2 0 0 0 2 7.5v11A2 2 0 0 0 4 20.5h16a2 2 0 0 0 2-2v-11a2 2 0 0 0-2-2h-3L15.5 3zM12 8.2a4.3 4.3 0 1 1 0 8.6 4.3 4.3 0 0 1 0-8.6z"/>'],
+      ["phone", "Telefoon", '<path fill-rule="evenodd" d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm1 2.5v13h6v-13zM12 18.6a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8z"/>'],
+      ["laptop", "Computer", '<path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5V15h-17V6.5A1.5 1.5 0 0 1 5 5zM1.5 16.5h21v.5a2 2 0 0 1-2 2h-17a2 2 0 0 1-2-2z"/>'],
+      ["book", "Boek", '<path d="M4 4.5C6.5 3.6 9.5 3.6 12 5c2.5-1.4 5.5-1.4 8-.5v14c-2.5-.9-5.5-.9-8 .5-2.5-1.4-5.5-1.4-8-.5z"/>'],
+      ["pencil", "Potlood", '<path d="M3 17.3V21h3.7L18 9.7 14.3 6zM20.7 7l-1.6 1.6-3.7-3.7L17 3.3a1 1 0 0 1 1.4 0l2.3 2.3a1 1 0 0 1 0 1.4z"/>'],
+      ["bulb", "Idee", '<path d="M12 2a7 7 0 0 0-4 12.7V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.3A7 7 0 0 0 12 2zM9.5 19.5h5V21a1 1 0 0 1-1 1h-3a1 1 0 0 1-1-1z"/>'],
+      ["gift", "Cadeau", '<path d="M3 9h18v3.5H3zM4.5 13.5h6.2V21H6.5A2 2 0 0 1 4.5 19zM13.3 13.5h6.2V19a2 2 0 0 1-2 2h-4.2zM12 8.5C9.2 8.5 7 7.4 7 5.6 7 4.2 8.2 3.3 9.5 3.5c1.3.2 2.1 1.5 2.5 5zm0 0c2.8 0 5-1.1 5-2.9 0-1.4-1.2-2.3-2.5-2.1-1.3.2-2.1 1.5-2.5 5z"/>'],
+      ["bell", "Bel", '<path d="M12 2.5a1.6 1.6 0 0 1 1.6 1.6v.6A6 6 0 0 1 18 10.5v4l2 2.2v1H4v-1l2-2.2v-4a6 6 0 0 1 4.4-5.8v-.6A1.6 1.6 0 0 1 12 2.5zM9.7 19.5h4.6a2.3 2.3 0 0 1-4.6 0z"/>'],
+      ["moon", "Maan", '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5z"/>'],
+      ["sun", "Zon", '<circle cx="12" cy="12" r="4.6"/><path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3M4.8 4.8l2.1 2.1M17.1 17.1l2.1 2.1M4.8 19.2l2.1-2.1M17.1 6.9l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>'],
+      ["cloud", "Wolk", '<path d="M7 19a5 5 0 0 1-.6-10A6.5 6.5 0 0 1 19 10.5 4.3 4.3 0 0 1 18 19z"/>'],
+      ["flag", "Vlag", '<path d="M5 2.5h2V22H5zM8 4h10.5l-2.3 4 2.3 4H8z"/>'],
+      ["key", "Sleutel", '<circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="m11.4 11.4 9.6 9.6M17 17l3-3M14 14l2.6-2.6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'],
+      ["lock", "Slot", '<path fill-rule="evenodd" d="M12 2a5 5 0 0 0-5 5v3H5.5A1.5 1.5 0 0 0 4 11.5v9A1.5 1.5 0 0 0 5.5 22h13a1.5 1.5 0 0 0 1.5-1.5v-9a1.5 1.5 0 0 0-1.5-1.5H17V7a5 5 0 0 0-5-5zm0 2.2A2.8 2.8 0 0 1 14.8 7v3H9.2V7A2.8 2.8 0 0 1 12 4.2z"/>'],
+      ["user", "Gebruiker", '<circle cx="12" cy="7.5" r="4.5"/><path d="M3.5 21.5c0-4.6 3.8-7.5 8.5-7.5s8.5 2.9 8.5 7.5z"/>'],
+      ["users", "Groep", '<circle cx="9" cy="8" r="3.8"/><path d="M1.5 20c0-3.9 3.1-6.3 7.5-6.3s7.5 2.4 7.5 6.3z"/><circle cx="17.5" cy="8.5" r="3"/><path d="M17.8 13.8c3 .2 4.9 2.2 4.9 5.2h-4.2c0-2-.6-3.8-.7-5.2z"/>'],
+      ["pin", "Plek", '<path fill-rule="evenodd" d="M12 2a7.5 7.5 0 0 0-7.5 7.5C4.5 15 12 22 12 22s7.5-7 7.5-12.5A7.5 7.5 0 0 0 12 2zm0 4.5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>'],
+      ["wrench", "Gereedschap", '<path d="M21.3 6.6a5.5 5.5 0 0 1-7.2 6.9L6.7 20.9a2.1 2.1 0 0 1-3-3l7.4-7.4A5.5 5.5 0 0 1 17.4 2.7l-3.3 3.3.9 3 3 .9z"/>'],
+      ["dice", "Dobbelsteen", '<path fill-rule="evenodd" d="M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm2 3.3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM8 14.7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm8 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/>'],
+      ["coffee", "Koffie", '<path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 9.5h1.5a2.5 2.5 0 0 1 0 5H17v-1.8h1.5a.7.7 0 0 0 0-1.4H17zM7 2.5h1.8v3H7zM11 2.5h1.8v3H11z"/>'],
+      ["tv", "TV", '<path fill-rule="evenodd" d="M3.5 5h17A1.5 1.5 0 0 1 22 6.5v10a1.5 1.5 0 0 1-1.5 1.5h-17A1.5 1.5 0 0 1 2 16.5v-10A1.5 1.5 0 0 1 3.5 5zM4 7.5v8h16v-8zM7 19.5h10V21H7z"/>'],
+      ["headphones", "Koptelefoon", '<path d="M12 3a9 9 0 0 0-9 9v6a3 3 0 0 0 3 3h1.5v-8H5v-1a7 7 0 0 1 14 0v1h-2.5v8H18a3 3 0 0 0 3-3v-6a9 9 0 0 0-9-9z"/>'],
+      ["diamond", "Diamant", '<path fill-rule="evenodd" d="M6.5 3h11l4.5 6L12 21.5 2 9zM8.5 9 12 18l3.5-9z"/>'],
+      ["target", "Doel", '<g fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="5"/></g><circle cx="12" cy="12" r="1.8"/>'],
+      ["flask", "Proefje", '<path d="M9 2h6v2h-1v5.2l5.6 9.6A2 2 0 0 1 17.9 22H6.1a2 2 0 0 1-1.7-3.2L10 9.2V4H9z"/>']
     ];
+    const ICON_MAP = Object.fromEntries(ICON_LIB.map(([id, label, svg]) => [id, { label, svg }]));
+    const LEGACY_TAB_ICONS = { all: "🏠", games: "🎮", apps: "🧩", edu: "🎓", favs: "❤️" };
+    const JF_LOGO = '<svg class="jf-logo" viewBox="0 0 58 36" fill="currentColor" aria-hidden="true"><path d="M12 3h10v22a9 9 0 0 1-9 9H3v-8h7a2 2 0 0 0 2-2z"/><path d="M27 3h20v8H36v4h9v7h-9v12h-9z"/><rect x="48" y="27" width="7" height="7" rx="1"/></svg>';
+
+    function iconHtml(icon) {
+      if (!icon) return "";
+      if (icon.startsWith("svg:")) {
+        const d = ICON_MAP[icon.slice(4)];
+        if (d) return `<svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${d.svg}</svg>`;
+        return "";
+      }
+      if (icon.startsWith("data:image/") || /^https?:\/\//.test(icon)) {
+        return `<img class="ico-img" src="${escapeHtml(icon)}" alt="">`;
+      }
+      return escapeHtml(icon);
+    }
     const BANNER_COLORS = ["#1f6fe5", "#ef4444", "#ec4899", "#a855f7", "#22c55e", "#f59e0b"];
     const SECTION_INFO = {
       mensen:       ["Mensen", "Wie er niet meer binnen mag, en tijdelijke groepsstraf"],
@@ -1466,22 +1584,23 @@
         if (!t.visible && t.id !== "all") return;
         const b = document.createElement("button");
         b.type = "button";
-        b.className = "pill-btn icon-only" + (currentTab === t.id ? " active" : "");
+        const iconMarkup = iconHtml(t.icon);
+        b.className = "pill-btn" + (iconMarkup ? " icon-only" : "") + (currentTab === t.id ? " active" : "");
         b.dataset.tab = t.id;
         b.title = t.name;
         b.setAttribute("aria-label", t.name);
-        b.textContent = t.icon;
+        b.innerHTML = iconMarkup || escapeHtml(t.name);
         b.onclick = () => setTab(t.id);
         nav.appendChild(b);
         if (t.id === "all") {
           const link = document.createElement("a");
-          link.className = "pill-btn icon-only";
+          link.className = "pill-btn icon-only jf";
           link.href = "https://jimfun.com";
           link.target = "_blank";
           link.rel = "noopener";
           link.title = "Jimfun (opent jimfun.com)";
           link.setAttribute("aria-label", "Jimfun");
-          link.textContent = "🌐";
+          link.innerHTML = JF_LOGO;
           nav.appendChild(link);
         }
       });
@@ -1497,7 +1616,7 @@
       const el = document.getElementById("tabsList");
       el.innerHTML = tabsDraft.map((t, i) => `
         <div class="item-row tab-row">
-          <button type="button" class="tab-icon-btn" title="Kies een symbool" onclick="toggleIconPicker(${i})">${escapeHtml(t.icon)}</button>
+          <button type="button" class="tab-icon-btn" title="Kies een icoon" onclick="openIconPicker(${i})">${iconHtml(t.icon) || "<small>Geen</small>"}</button>
           <input type="text" class="mini-input" value="${escapeHtml(t.name)}" maxlength="24" style="flex:1;" placeholder="Naam van de tab" oninput="setDraftName(${i}, this.value)">
           <label class="sw">
             <input type="checkbox" class="toggle" ${t.visible ? "checked" : ""} ${t.id === "all" ? "disabled" : ""} onchange="setDraftVisible(${i}, this.checked)">
@@ -1506,9 +1625,6 @@
           <button type="button" class="icon-btn" title="Omhoog" onclick="moveTab(${i}, -1)" ${i === 0 ? "disabled" : ""}>↑</button>
           <button type="button" class="icon-btn" title="Omlaag" onclick="moveTab(${i}, 1)" ${i === tabsDraft.length - 1 ? "disabled" : ""}>↓</button>
           ${t.builtin ? "" : `<button type="button" class="icon-btn del-btn" title="Verwijderen" onclick="removeTabDraft(${i})">✕</button>`}
-          ${iconPickerFor === i ? `<div class="icon-grid">${ICON_CHOICES.map(ic =>
-            `<button type="button" class="icon-choice ${ic === t.icon ? "active" : ""}" onclick="pickTabIcon(${i}, '${ic}')">${ic}</button>`
-          ).join("")}</div>` : ""}
         </div>
       `).join("");
     }
@@ -1516,29 +1632,50 @@
     function setDraftName(i, v) { if (tabsDraft[i]) tabsDraft[i].name = v; }
     function setDraftVisible(i, v) { if (tabsDraft[i]) tabsDraft[i].visible = v; }
 
-    function toggleIconPicker(i) {
-      iconPickerFor = iconPickerFor === i ? -1 : i;
-      renderTabsEditor();
+    function openIconPicker(i) {
+      iconPickerFor = i;
+      const cur = tabsDraft[i] ? tabsDraft[i].icon : "";
+      const tile = (value, inner, label, extra) =>
+        `<button type="button" class="icon-tile ${cur === value ? "active" : ""} ${extra || ""}" onclick="pickTabIcon(${i}, '${value}')">${inner}<span>${escapeHtml(label)}</span></button>`;
+      const customTile = cur && (cur.startsWith("data:image/") || cur.startsWith("http"))
+        ? `<button type="button" class="icon-tile active" onclick="closeIconPicker()"><img class="ico-img" src="${escapeHtml(cur)}" alt=""><span>Eigen icoon</span></button>` : "";
+      document.getElementById("iconGrid").innerHTML =
+        tile("", `<b>Geen</b>`, "", "none") + customTile +
+        ICON_LIB.map(([id, label]) => tile("svg:" + id, iconHtml("svg:" + id), label)).join("");
+      document.getElementById("iconModal").classList.add("open");
+    }
+
+    function closeIconPicker() {
+      document.getElementById("iconModal").classList.remove("open");
     }
 
     function pickTabIcon(i, icon) {
       if (tabsDraft[i]) tabsDraft[i].icon = icon;
-      iconPickerFor = -1;
+      closeIconPicker();
       renderTabsEditor();
+    }
+
+    function handleTabIconUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      event.target.value = "";
+      if (!file || iconPickerFor < 0) return;
+      readImageSmall(file, (data) => {
+        if (data.length > 120000) return alert("Dit plaatje is te groot. Kies een kleiner plaatje.");
+        pickTabIcon(iconPickerFor, data);
+      });
     }
 
     function moveTab(i, dir) {
       const j = i + dir;
       if (j < 0 || j >= tabsDraft.length) return;
       [tabsDraft[i], tabsDraft[j]] = [tabsDraft[j], tabsDraft[i]];
-      iconPickerFor = -1;
       renderTabsEditor();
     }
 
     function addTabDraft() {
-      tabsDraft.push({ id: "t-" + Date.now().toString(36), name: "Nieuwe tab", icon: "⭐", visible: true, type: "content", builtin: false });
-      iconPickerFor = tabsDraft.length - 1;
+      tabsDraft.push({ id: "t-" + Date.now().toString(36), name: "Nieuwe tab", icon: "svg:star", visible: true, type: "content", builtin: false });
       renderTabsEditor();
+      openIconPicker(tabsDraft.length - 1);
     }
 
     function removeTabDraft(i) {
@@ -1546,7 +1683,6 @@
       if (!t || t.builtin) return;
       if (!confirm(`Tab "${t.name}" verwijderen? Games en apps in deze tab verhuizen naar Games.`)) return;
       tabsDraft.splice(i, 1);
-      iconPickerFor = -1;
       renderTabsEditor();
     }
 
@@ -1559,7 +1695,6 @@
       if (moved) localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
       localStorage.setItem(TABS_KEY, JSON.stringify(tabsConfig));
       tabsDraft = JSON.parse(JSON.stringify(tabsConfig));
-      iconPickerFor = -1;
       logAction("Tabs aangepast");
       renderNav();
       fillCategorySelects();
@@ -1588,7 +1723,7 @@
               <small>${item.type === "html" ? "HTML-code" : "Link"}</small>
             </div>
             <select class="mini-select" onchange="changeItemCategory('${item.id}', this.value)" ${isCustom ? "" : "disabled"}>
-              ${contentTabs().map(t => `<option value="${escapeHtml(t.id)}" ${itemTabId(item) === t.id ? "selected" : ""}>${escapeHtml(t.icon)} ${escapeHtml(t.name)}</option>`).join("")}
+              ${contentTabs().map(t => `<option value="${escapeHtml(t.id)}" ${itemTabId(item) === t.id ? "selected" : ""}>${escapeHtml(t.name)}</option>`).join("")}
             </select>
             <label class="sw">
               <input type="checkbox" class="toggle" ${item.hidden ? "" : "checked"} onchange="toggleItemVisible('${item.id}', this.checked)" ${isCustom ? "" : "disabled"}>
@@ -2290,7 +2425,7 @@
       const searched = all.filter(item => item.title.toLowerCase().includes(q));
       const favs = searched.filter(item => favorites.includes(item.id));
       const favTab = getTab("favs");
-      const title = (t) => `${escapeHtml(t.icon)} ${escapeHtml(t.name)}`;
+      const title = (t) => `${iconHtml(t.icon)} ${escapeHtml(t.name)}`;
 
       const area = document.getElementById("contentArea");
       area.innerHTML = "";
@@ -2478,7 +2613,7 @@
       const box = document.createElement("div");
       box.className = "section-block";
       box.innerHTML = `
-        <h2>${escapeHtml(t.icon)} ${escapeHtml(t.name)} <small>Nederlands A1</small></h2>
+        <h2>${iconHtml(t.icon)} ${escapeHtml(t.name)} <small>Nederlands A1</small></h2>
         <div class="edu-grid">
           <button type="button" class="edu-card" onclick="openQuizSetup()">
             <span class="edu-emoji">📝</span><strong>A1-quiz</strong>
@@ -3060,7 +3195,7 @@
         out.push({
           id,
           name: (typeof t.name === "string" && t.name.trim()) ? t.name.trim().slice(0, 24) : (def ? def.name : "Tab"),
-          icon: (typeof t.icon === "string" && t.icon.trim()) ? t.icon.trim().slice(0, 12) : (def ? def.icon : "📁"),
+          icon: normalizeTabIcon(t.icon, def, id),
           visible: id === "all" ? true : (typeof t.visible === "boolean" ? t.visible : true),
           type: BUILTIN_TYPES[id] || "content",
           builtin: Boolean(def)
@@ -3073,6 +3208,18 @@
         else out.splice(Math.min(i, out.length), 0, copy);
       });
       return out;
+    }
+
+    function normalizeTabIcon(icon, def, id) {
+      const fallback = def ? def.icon : "svg:star";
+      if (typeof icon !== "string") return fallback;
+      icon = icon.trim();
+      if (def && icon === LEGACY_TAB_ICONS[id]) return def.icon;
+      if (icon === "") return "";
+      if (icon.startsWith("svg:")) return ICON_MAP[icon.slice(4)] ? icon : fallback;
+      if (icon.startsWith("data:image/")) return icon.length <= 120000 ? icon : fallback;
+      if (/^https?:\/\//.test(icon)) return icon.slice(0, 500);
+      return icon.slice(0, 12);
     }
 
     function getTab(id) {
@@ -3088,12 +3235,11 @@
     }
 
     function defaultIconFor(category) {
-      const t = getTab(category);
-      return (t && t.icon) || "🎮";
+      return category === "apps" ? "⚡" : "🎮";
     }
 
     function fillCategorySelects() {
-      const opts = contentTabs().map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.icon)} ${escapeHtml(t.name)}</option>`).join("");
+      const opts = contentTabs().map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join("");
       ["itemCat", "editCat"].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
