@@ -661,9 +661,166 @@
     .chip.off { background: rgba(239,68,68,0.2); color: #f87171; }
     .issued { margin-top: 12px; padding: 14px; border-radius: 14px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.4); }
     .issued code { display: block; margin: 8px 0; padding: 10px 12px; font-size: 1.05rem; background: #050914; border-radius: 10px; word-break: break-all; user-select: all; }
+
+    /* ===== Laadscherm ===== */
+    .loader {
+      position: fixed; inset: 0; z-index: 200; background: #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .loader.hide { opacity: 0; visibility: hidden; }
+    .loader-stage { position: relative; width: 170px; height: 170px; display: flex; align-items: center; justify-content: center; }
+    .loader-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 5px solid rgba(255,255,255,0.1);
+      border-top-color: var(--acc); border-right-color: color-mix(in srgb, var(--acc) 40%, transparent);
+      animation: loader-spin 1.1s linear infinite;
+    }
+    .loader .brand-logo { width: 96px; height: 96px; border-radius: 24px; animation: loader-pulse 1.8s ease-in-out infinite; }
+    .loader-text { display: none; font-size: 3.4rem; font-weight: 900; letter-spacing: -0.03em; color: #e5e7eb; }
+    .loader-name { color: #94a3b8; letter-spacing: 0.35em; text-transform: uppercase; font-size: 0.78rem; font-weight: 700; }
+    @keyframes loader-spin { to { transform: rotate(360deg); } }
+    @keyframes loader-pulse { 0%, 100% { transform: scale(1); opacity: 0.95; } 50% { transform: scale(1.06); opacity: 1; } }
+
+    /* ===== Mooier: algemene verbeteringen ===== */
+    html { scroll-behavior: smooth; }
+    ::selection { background: var(--acc); color: #fff; }
+    * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.25) transparent; }
+    header.top {
+      position: sticky; top: 0; z-index: 30;
+      padding: 12px 6px; margin: 0 -6px 26px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.92), rgba(0,0,0,0.6));
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-radius: 0 0 24px 24px;
+    }
+    .pill-btn.icon-only { width: 48px; padding: 0; justify-content: center; font-size: 1.35rem; }
+    .pill-btn.icon-only.active { transform: scale(1.04); box-shadow: 0 4px 18px rgba(255,255,255,0.25); }
+    a.pill-btn { padding: 0 16px; font-size: 0.9rem; }
+
+    .gotd-hero::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 92% 8%, rgba(255,255,255,0.14), transparent 42%);
+    }
+    .gotd-label {
+      display: inline-block; padding: 5px 12px; border-radius: 999px;
+      background: rgba(255,255,255,0.14); backdrop-filter: blur(6px);
+    }
+    .gotd-preview { box-shadow: 0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.14); }
+
+    @keyframes tile-in { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: none; } }
+    .tile { animation: tile-in 0.4s ease both; }
+    .tile:hover .thumb { transform: scale(1.03); }
+    .thumb { transition: box-shadow 0.15s ease, transform 0.2s ease; }
+    h2 { letter-spacing: -0.01em; }
+    .section-block { margin-bottom: 40px; }
+    .site-footer { text-align: center; color: #64748b; font-size: 0.82rem; padding: 26px 0 10px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 20px; }
+
+    @media (max-width: 600px) {
+      body { padding: 12px 12px 30px; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 18px 12px; }
+      .gotd-hero { padding: 22px 18px; min-height: 0; }
+      .thumb { border-radius: 16px; }
+    }
+
+    /* ===== Tabs-editor ===== */
+    .tab-icon-btn {
+      width: 50px; height: 50px; border-radius: 14px; font-size: 1.6rem; cursor: pointer;
+      background: #050914; border: 1px solid var(--border); color: #fff;
+    }
+    .tab-icon-btn:hover { border-color: var(--acc); }
+    .icon-grid {
+      flex-basis: 100%; display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;
+      padding: 10px; border-radius: 14px; background: #050914; border: 1px solid var(--border);
+    }
+    .icon-choice {
+      aspect-ratio: 1; border-radius: 10px; font-size: 1.35rem; cursor: pointer;
+      background: transparent; border: 2px solid transparent; color: #fff;
+    }
+    .icon-choice:hover { background: rgba(255,255,255,0.1); }
+    .icon-choice.active { border-color: var(--acc); background: rgba(31,111,229,0.25); }
+    .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    @media (max-width: 600px) { .icon-grid { grid-template-columns: repeat(5, 1fr); } }
+
+    /* ===== Educatie ===== */
+    .edu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+    .edu-card {
+      display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 22px;
+      border-radius: 22px; color: #fff; cursor: pointer; transition: 0.18s;
+      background: linear-gradient(135deg, rgba(31,111,229,0.3), rgba(124,58,237,0.22));
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .edu-card:hover { transform: translateY(-4px); border-color: var(--acc); box-shadow: 0 14px 30px rgba(0,0,0,0.45); }
+    .edu-card strong { font-size: 1.3rem; }
+    .edu-card span:last-child { color: #cbd5e1; font-size: 0.92rem; }
+    .edu-emoji { font-size: 2.4rem; }
+    .edu-overlay { display: none; position: fixed; inset: 0; z-index: 75; background: #05070d; flex-direction: column; }
+    .edu-overlay.open { display: flex; }
+    .edu-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; background: #0a1020; border-bottom: 1px solid var(--border); }
+    .edu-body { flex: 1; overflow-y: auto; padding: 26px 16px 70px; }
+    .edu-inner { max-width: 720px; margin: 0 auto; }
+    .edu-inner h2 { font-size: 1.8rem; margin-bottom: 6px; }
+    .edu-sub { color: var(--muted); margin-bottom: 8px; }
+    .theme-list { display: grid; gap: 12px; margin-top: 16px; }
+    .theme-btn {
+      display: grid; grid-template-columns: 52px 1fr; column-gap: 14px; align-items: center; text-align: left;
+      padding: 16px 18px; border-radius: 18px; color: #fff; cursor: pointer; transition: 0.15s;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    }
+    .theme-btn span { grid-row: 1 / 3; font-size: 2rem; }
+    .theme-btn b { font-size: 1.1rem; }
+    .theme-btn small { color: var(--muted); }
+    .theme-btn:hover { border-color: var(--acc); background: rgba(31,111,229,0.18); }
+    .quiz-top { display: flex; justify-content: space-between; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+    .quiz-bar { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.1); overflow: hidden; margin-bottom: 24px; }
+    .quiz-bar div { height: 100%; background: var(--acc); transition: width 0.3s; }
+    .quiz-q { display: flex; gap: 12px; align-items: flex-start; font-size: 1.5rem; font-weight: 800; line-height: 1.3; margin-bottom: 22px; }
+    .speak-btn {
+      flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
+      background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: #fff;
+    }
+    .speak-btn:hover { background: rgba(255,255,255,0.2); }
+    .quiz-opts { display: grid; gap: 10px; }
+    .quiz-opt {
+      text-align: left; padding: 16px 18px; border-radius: 16px; cursor: pointer; transition: 0.15s;
+      border: 2px solid var(--border); background: rgba(255,255,255,0.05); color: #fff; font-size: 1.05rem; font-weight: 600;
+    }
+    .quiz-opt:hover:not(:disabled) { border-color: var(--acc); }
+    .quiz-opt:disabled { cursor: default; }
+    .quiz-opt.right { border-color: #22c55e; background: rgba(34,197,94,0.18); }
+    .quiz-opt.wrong { border-color: #ef4444; background: rgba(239,68,68,0.18); }
+    .quiz-fb { margin: 18px 0 14px; padding: 14px 16px; border-radius: 14px; line-height: 1.45; }
+    .quiz-fb.good { background: rgba(34,197,94,0.14); }
+    .quiz-fb.bad { background: rgba(239,68,68,0.14); }
+    .btn.big { padding: 14px 26px; font-size: 1.05rem; }
+    .quiz-result { text-align: center; }
+    .score-ring {
+      width: 150px; height: 150px; border-radius: 50%; border: 9px solid var(--acc); margin: 10px auto 18px;
+      display: flex; align-items: center; justify-content: center; font-size: 2.3rem; font-weight: 900;
+    }
+    .wrong-list { text-align: left; display: grid; gap: 10px; margin: 14px 0 24px; }
+    .wrong-list div { padding: 12px 14px; border-radius: 12px; background: rgba(255,255,255,0.05); line-height: 1.45; }
+    .talk-card {
+      padding: 34px 24px; border-radius: 24px; text-align: center; margin-bottom: 16px;
+      background: linear-gradient(135deg, rgba(31,111,229,0.3), rgba(124,58,237,0.22));
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .talk-card p { font-size: 1.7rem; font-weight: 800; line-height: 1.3; margin-bottom: 20px; }
+    .talk-input {
+      width: 100%; min-height: 110px; margin-bottom: 14px; padding: 12px; font-size: 1rem; outline: none;
+      background: #050914; border: 1px solid var(--border); border-radius: 14px; color: #fff;
+    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
+  <div class="loader" id="loader">
+    <div class="loader-stage">
+      <div class="loader-ring"></div>
+      <img class="brand-logo loader-logo" src="logo.png" alt="" onerror="this.style.display='none';document.getElementById('loaderText').style.display='block'">
+      <span class="loader-text" id="loaderText">IG.</span>
+    </div>
+    <div class="loader-name">IrfanGames</div>
+  </div>
   <div class="glow"></div>
 
   <div class="lockout" id="lockoutScreen">
@@ -711,6 +868,16 @@
     </section>
 
     <div id="contentArea"></div>
+    <footer class="site-footer">Gemaakt door Irfan · IrfanGames Hub</footer>
+  </div>
+
+  <!-- Educatie -->
+  <div class="edu-overlay" id="eduOverlay">
+    <div class="edu-bar">
+      <strong id="eduTitle">Educatie</strong>
+      <button type="button" class="btn pri" onclick="closeEdu()">✕ Sluiten</button>
+    </div>
+    <div class="edu-body" id="eduBody"><div class="edu-inner" id="eduInner"></div></div>
   </div>
 
   <!-- Admin Unlock Modal -->
@@ -827,7 +994,9 @@
 
           <!-- Tabs -->
           <div id="sec-tabs" style="display:none;">
+            <p class="admin-note">Klik op een symbool om een ander symbool te kiezen (50 om uit te kiezen). In de balk bovenaan zie je alleen de symbolen. Vergeet niet op Opslaan te drukken.</p>
             <div class="toolbar">
+              <button type="button" class="btn" onclick="addTabDraft()">+ Nieuwe tab</button>
               <button type="button" class="btn white" onclick="saveTabs()">Opslaan</button>
             </div>
             <div id="tabsList"></div>
@@ -1049,22 +1218,33 @@
     const ACCENT_KEY = "irfanhub_accent_v1";
     const ADMIN_REMEMBER_KEY = "irfanhub_admin_remember_v1";
     const LOG_KEY = "irfanhub_log_v1";
-    const TABS_KEY = "irfanhub_tabs_v1";
+    const TABS_KEY = "irfanhub_tabs_v2";
+    const TABS_KEY_V1 = "irfanhub_tabs_v1";
+    const QUIZ_BEST_KEY = "irfanhub_quiz_best_v1";
     const BANNER_COLOR_KEY = "irfanhub_banner_color_v1";
     const SEARCH_KEY = "irfanhub_search_visible_v1";
 
-    const DEFAULT_TABS = {
-      all:   { label: "🎮 Alles",      visible: true },
-      games: { label: "Games",         visible: true },
-      apps:  { label: "Apps",          visible: true },
-      favs:  { label: "♥ Favorieten",  visible: true }
-    };
+    const DEFAULT_TAB_LIST = [
+      { id: "all",   name: "Alles",      icon: "🏠", visible: true, type: "all",     builtin: true },
+      { id: "games", name: "Games",      icon: "🎮", visible: true, type: "content", builtin: true },
+      { id: "apps",  name: "Apps",       icon: "🧩", visible: true, type: "content", builtin: true },
+      { id: "edu",   name: "Educatie",   icon: "🎓", visible: true, type: "edu",     builtin: true },
+      { id: "favs",  name: "Favorieten", icon: "❤️", visible: true, type: "favs",    builtin: true }
+    ];
+    const BUILTIN_TYPES = { all: "all", favs: "favs", edu: "edu" };
+    const ICON_CHOICES = [
+      "🏠","🎮","🧩","🎓","❤️","⭐","🔥","⚡","🎯","🏆",
+      "🎲","🕹️","👾","🚗","🏎️","⚽","🏀","🎵","🎧","🎬",
+      "📺","📚","📖","✏️","🧠","🔬","🧪","🌍","🗺️","🚀",
+      "🛠️","💡","🎨","📷","💬","📱","💻","🍕","🍔","☕",
+      "🐱","🐶","🌈","☀️","🌙","❄️","🌸","🧸","🎁","🔒"
+    ];
     const BANNER_COLORS = ["#1f6fe5", "#ef4444", "#ec4899", "#a855f7", "#22c55e", "#f59e0b"];
     const SECTION_INFO = {
       mensen:       ["Mensen", "Wie er niet meer binnen mag, en tijdelijke groepsstraf"],
       logboek:      ["Logboek", "Alles wat beheerders hebben gedaan, met naam en tijd"],
       beheerders:   ["Beheerders", "Geef anderen admin, bekijk wat ze doen en neem het weer af"],
-      tabs:         ["Tabs", "Geef de tabs een eigen naam en kies welke zichtbaar zijn"],
+      tabs:         ["Tabs", "Maak tabs, geef ze een naam en kies een symbool"],
       apps:         ["Apps & games", "Alles op één plek: openen, bewerken, verbergen en verwijderen"],
       banners:      ["Banners", "Een balk bovenaan de hub"],
       stijl:        ["Stijl", "Accentkleur en game van de dag"],
@@ -1099,18 +1279,7 @@
     let bans = readJson(BAN_KEY, []);
     let adminLog = readJson(LOG_KEY, []);
     let selectedBannerColor = localStorage.getItem(BANNER_COLOR_KEY) || BANNER_COLORS[0];
-    let tabsConfig = (function () {
-      const saved = readJson(TABS_KEY, {});
-      const out = {};
-      Object.keys(DEFAULT_TABS).forEach(k => {
-        const c = saved && saved[k] ? saved[k] : {};
-        out[k] = {
-          label: (typeof c.label === "string" && c.label.trim()) ? c.label : DEFAULT_TABS[k].label,
-          visible: k === "all" ? true : (typeof c.visible === "boolean" ? c.visible : true)
-        };
-      });
-      return out;
-    })();
+    let tabsConfig = normalizeTabs(readJson(TABS_KEY, null) || readJson(TABS_KEY_V1, null));
 
     function logAction(text) {
       const entry = { t: Date.now(), who: adminName, text };
@@ -1231,7 +1400,7 @@
       if (section === "mensen") { renderBans(); renderStats(); }
       if (section === "logboek") { renderLog(); loadLog(); }
       if (section === "beheerders") renderHelperList();
-      if (section === "tabs") renderTabsEditor();
+      if (section === "tabs") { tabsDraft = []; iconPickerFor = -1; renderTabsEditor(); }
       if (section === "apps") { renderAdminItems(); toggleAddForm(openForm); }
       if (section === "banners") {
         document.getElementById("bannerInput").value = localStorage.getItem(BANNER_KEY) || "";
@@ -1255,6 +1424,7 @@
 
     function toggleAddForm(show) {
       document.getElementById("addForm").style.display = show ? "block" : "none";
+      if (show) fillCategorySelects();
       if (show) updateAddPreview();
     }
 
@@ -1292,52 +1462,109 @@
     function renderNav() {
       const nav = document.getElementById("pillNav");
       nav.innerHTML = "";
-      Object.keys(DEFAULT_TABS).forEach(k => {
-        const c = tabsConfig[k];
-        if (!c.visible && k !== "all") return;
+      tabsConfig.forEach(t => {
+        if (!t.visible && t.id !== "all") return;
         const b = document.createElement("button");
         b.type = "button";
-        b.className = "pill-btn" + (currentTab === k ? " active" : "");
-        b.dataset.tab = k;
-        b.textContent = c.label;
-        b.onclick = () => setTab(k);
+        b.className = "pill-btn icon-only" + (currentTab === t.id ? " active" : "");
+        b.dataset.tab = t.id;
+        b.title = t.name;
+        b.setAttribute("aria-label", t.name);
+        b.textContent = t.icon;
+        b.onclick = () => setTab(t.id);
         nav.appendChild(b);
-        if (k === "all") {
+        if (t.id === "all") {
           const link = document.createElement("a");
-          link.className = "pill-btn";
+          link.className = "pill-btn icon-only";
           link.href = "https://jimfun.com";
           link.target = "_blank";
           link.rel = "noopener";
-          link.textContent = "↗ Jimfun";
+          link.title = "Jimfun (opent jimfun.com)";
+          link.setAttribute("aria-label", "Jimfun");
+          link.textContent = "🌐";
           nav.appendChild(link);
         }
       });
-      if (currentTab !== "all" && tabsConfig[currentTab] && !tabsConfig[currentTab].visible) setTab("all");
+      const cur = getTab(currentTab);
+      if (currentTab !== "all" && (!cur || !cur.visible)) setTab("all");
     }
 
+    let tabsDraft = [];
+    let iconPickerFor = -1;
+
     function renderTabsEditor() {
+      if (!tabsDraft.length) tabsDraft = JSON.parse(JSON.stringify(tabsConfig));
       const el = document.getElementById("tabsList");
-      el.innerHTML = Object.keys(DEFAULT_TABS).map(k => `
-        <div class="item-row">
-          <input type="text" class="mini-input" id="tabLabel-${k}" value="${escapeHtml(tabsConfig[k].label)}" style="flex:1;">
+      el.innerHTML = tabsDraft.map((t, i) => `
+        <div class="item-row tab-row">
+          <button type="button" class="tab-icon-btn" title="Kies een symbool" onclick="toggleIconPicker(${i})">${escapeHtml(t.icon)}</button>
+          <input type="text" class="mini-input" value="${escapeHtml(t.name)}" maxlength="24" style="flex:1;" placeholder="Naam van de tab" oninput="setDraftName(${i}, this.value)">
           <label class="sw">
-            <input type="checkbox" class="toggle" id="tabVis-${k}" ${tabsConfig[k].visible ? "checked" : ""} ${k === "all" ? "disabled" : ""}>
+            <input type="checkbox" class="toggle" ${t.visible ? "checked" : ""} ${t.id === "all" ? "disabled" : ""} onchange="setDraftVisible(${i}, this.checked)">
             Zichtbaar
           </label>
+          <button type="button" class="icon-btn" title="Omhoog" onclick="moveTab(${i}, -1)" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" class="icon-btn" title="Omlaag" onclick="moveTab(${i}, 1)" ${i === tabsDraft.length - 1 ? "disabled" : ""}>↓</button>
+          ${t.builtin ? "" : `<button type="button" class="icon-btn del-btn" title="Verwijderen" onclick="removeTabDraft(${i})">✕</button>`}
+          ${iconPickerFor === i ? `<div class="icon-grid">${ICON_CHOICES.map(ic =>
+            `<button type="button" class="icon-choice ${ic === t.icon ? "active" : ""}" onclick="pickTabIcon(${i}, '${ic}')">${ic}</button>`
+          ).join("")}</div>` : ""}
         </div>
       `).join("");
     }
 
+    function setDraftName(i, v) { if (tabsDraft[i]) tabsDraft[i].name = v; }
+    function setDraftVisible(i, v) { if (tabsDraft[i]) tabsDraft[i].visible = v; }
+
+    function toggleIconPicker(i) {
+      iconPickerFor = iconPickerFor === i ? -1 : i;
+      renderTabsEditor();
+    }
+
+    function pickTabIcon(i, icon) {
+      if (tabsDraft[i]) tabsDraft[i].icon = icon;
+      iconPickerFor = -1;
+      renderTabsEditor();
+    }
+
+    function moveTab(i, dir) {
+      const j = i + dir;
+      if (j < 0 || j >= tabsDraft.length) return;
+      [tabsDraft[i], tabsDraft[j]] = [tabsDraft[j], tabsDraft[i]];
+      iconPickerFor = -1;
+      renderTabsEditor();
+    }
+
+    function addTabDraft() {
+      tabsDraft.push({ id: "t-" + Date.now().toString(36), name: "Nieuwe tab", icon: "⭐", visible: true, type: "content", builtin: false });
+      iconPickerFor = tabsDraft.length - 1;
+      renderTabsEditor();
+    }
+
+    function removeTabDraft(i) {
+      const t = tabsDraft[i];
+      if (!t || t.builtin) return;
+      if (!confirm(`Tab "${t.name}" verwijderen? Games en apps in deze tab verhuizen naar Games.`)) return;
+      tabsDraft.splice(i, 1);
+      iconPickerFor = -1;
+      renderTabsEditor();
+    }
+
     function saveTabs() {
-      Object.keys(DEFAULT_TABS).forEach(k => {
-        const label = document.getElementById("tabLabel-" + k).value.trim();
-        tabsConfig[k].label = label || DEFAULT_TABS[k].label;
-        tabsConfig[k].visible = k === "all" ? true : document.getElementById("tabVis-" + k).checked;
+      tabsConfig = normalizeTabs(tabsDraft);
+      let moved = 0;
+      customItems.forEach(it => {
+        if (!contentTabs().some(t => t.id === it.category)) { it.category = "games"; moved++; }
       });
+      if (moved) localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
       localStorage.setItem(TABS_KEY, JSON.stringify(tabsConfig));
+      tabsDraft = JSON.parse(JSON.stringify(tabsConfig));
+      iconPickerFor = -1;
       logAction("Tabs aangepast");
       renderNav();
+      fillCategorySelects();
       renderTabsEditor();
+      render();
     }
 
     function renderAdminItems() {
@@ -1361,8 +1588,7 @@
               <small>${item.type === "html" ? "HTML-code" : "Link"}</small>
             </div>
             <select class="mini-select" onchange="changeItemCategory('${item.id}', this.value)" ${isCustom ? "" : "disabled"}>
-              <option value="games" ${item.category === "games" ? "selected" : ""}>Games</option>
-              <option value="apps" ${item.category === "apps" ? "selected" : ""}>Apps</option>
+              ${contentTabs().map(t => `<option value="${escapeHtml(t.id)}" ${itemTabId(item) === t.id ? "selected" : ""}>${escapeHtml(t.icon)} ${escapeHtml(t.name)}</option>`).join("")}
             </select>
             <label class="sw">
               <input type="checkbox" class="toggle" ${item.hidden ? "" : "checked"} onchange="toggleItemVisible('${item.id}', this.checked)" ${isCustom ? "" : "disabled"}>
@@ -1548,7 +1774,8 @@
 
       document.getElementById("editId").value = item.id;
       document.getElementById("editTitle").value = item.title;
-      document.getElementById("editCat").value = item.category;
+      fillCategorySelects();
+      document.getElementById("editCat").value = itemTabId(item);
       document.getElementById("editIcon").value = isUploadedImg ? "" : item.icon;
       document.getElementById("editUrl").value = item.url || "";
       document.getElementById("editHtml").value = item.html || "";
@@ -1571,7 +1798,7 @@
       const title = document.getElementById("editTitle").value.trim();
       const category = document.getElementById("editCat").value;
       const typedIcon = document.getElementById("editIcon").value.trim();
-      const icon = editUploadedImageData || typedIcon || editExistingIcon || (category === "games" ? "🎮" : "⚡");
+      const icon = editUploadedImageData || typedIcon || editExistingIcon || defaultIconFor(category);
       const url = document.getElementById("editUrl").value.trim();
       const html = document.getElementById("editHtml").value;
 
@@ -1828,7 +2055,7 @@
       const title = document.getElementById("itemTitle").value.trim();
       const category = document.getElementById("itemCat").value;
       const typedIcon = document.getElementById("itemIcon").value.trim();
-      const icon = uploadedImageData || typedIcon || (category === "games" ? "🎮" : "⚡");
+      const icon = uploadedImageData || typedIcon || defaultIconFor(category);
       const url = document.getElementById("itemUrl").value.trim();
       const html = document.getElementById("itemHtml").value;
 
@@ -1997,7 +2224,7 @@
       const block = document.createElement("div");
       block.className = "section-block";
       const h2 = document.createElement("h2");
-      h2.innerHTML = `${titleText} <small>${items.length} items</small>`;
+      h2.innerHTML = `${titleText} <small>${items.length} ${items.length === 1 ? "item" : "items"}</small>`;
       block.appendChild(h2);
 
       if (!items.length) {
@@ -2061,26 +2288,380 @@
       }
 
       const searched = all.filter(item => item.title.toLowerCase().includes(q));
-      const games = searched.filter(item => item.category === "games");
-      const apps = searched.filter(item => item.category === "apps");
       const favs = searched.filter(item => favorites.includes(item.id));
+      const favTab = getTab("favs");
+      const title = (t) => `${escapeHtml(t.icon)} ${escapeHtml(t.name)}`;
 
       const area = document.getElementById("contentArea");
       area.innerHTML = "";
-      if (currentTab === "favs") {
-        area.appendChild(renderSection("Favorieten", favs, "Je hebt nog geen favorieten. Tik op het hartje bij een game."));
+      if (currentTab === "edu") {
+        renderEducation(area);
+      } else if (currentTab === "favs") {
+        area.appendChild(renderSection(title(favTab), favs, "Je hebt nog geen favorieten. Tik op het hartje bij een game."));
       } else {
         if (currentTab === "all" && favs.length) {
-          area.appendChild(renderSection("Favorieten", favs, ""));
+          area.appendChild(renderSection(title(favTab), favs, ""));
         }
-        if (currentTab === "all" || currentTab === "games") {
-          area.appendChild(renderSection("Games", games, "Nog geen games in deze lijst.", "games"));
-        }
-        if (currentTab === "all" || currentTab === "apps") {
-          area.appendChild(renderSection("Apps", apps, "Nog geen apps in deze lijst.", "apps"));
-        }
+        contentTabs().forEach(t => {
+          if (!t.visible) return;
+          if (currentTab !== "all" && currentTab !== t.id) return;
+          const list = searched.filter(item => itemTabId(item) === t.id);
+          area.appendChild(renderSection(title(t), list, `Nog niets in ${t.name}.`, t.id));
+        });
+        const eduTab = getTab("edu");
+        if (currentTab === "all" && eduTab && eduTab.visible) area.appendChild(makeEduPromo());
       }
       renderAdminItems();
+    }
+
+
+    // ===== Educatie: A1-quiz en spreekoefening =====
+    const QUIZ_THEMES = {
+      werk:  { icon: "💼", name: "Werk, opleiding en vervoer" },
+      vrij:  { icon: "🌞", name: "Vrije tijd" },
+      wonen: { icon: "🏠", name: "Wonen" },
+      alg:   { icon: "🌍", name: "Algemene kennis" }
+    };
+
+    // Het eerste antwoord in "o" is steeds het goede; de volgorde wordt in de quiz door elkaar gehusseld.
+    const QUIZ_BANK = [
+      { t: "werk", q: "Wat is een goed antwoord op de vraag ‘Hebt u werk?’", o: ["Ja, ik werk in een winkel.", "Ja, ik heb een rode jas.", "Nee, het is woensdag.", "Ik woon in een groot huis."], e: "Bij ‘Hebt u werk?’ zeg je ja of nee. Daarna vertel je wat voor werk je doet." },
+      { t: "werk", q: "Welke vraag past bij het antwoord: ‘Ik werk al drie jaar in een ziekenhuis.’?", o: ["Hoe lang doet u dat werk al?", "Waar woont u?", "Hebt u een rijbewijs?", "Wat is uw favoriete kleur?"], e: "‘Hoe lang’ gaat over de tijd. Het antwoord is ‘drie jaar’." },
+      { t: "werk", q: "Wat is ‘vrijwilligerswerk’?", o: ["Werk doen om anderen te helpen, zonder loon", "Werk met heel veel geld", "Een nieuwe baan zoeken", "Een dag vrij hebben"], e: "Een vrijwilliger werkt zonder loon, omdat hij of zij anderen wil helpen." },
+      { t: "werk", q: "Wat is een ‘rijbewijs’?", o: ["Een kaart waarmee je mag autorijden", "Een kaartje voor de trein", "Een soort school", "Een boodschappenlijst"], e: "Met een rijbewijs mag je auto rijden." },
+      { t: "werk", q: "Welke zin is goed?", o: ["Ik ben vroeger naar school gegaan.", "Ik heb vroeger naar school gegaan.", "Ik word vroeger naar school gegaan.", "Ik ga vroeger naar school gegaan."], e: "Bij ‘gaan’ gebruik je in het verleden ‘ben … gegaan’." },
+      { t: "werk", q: "Welk antwoord past bij de vraag ‘Wat kunt u goed?’", o: ["Ik kan goed koken.", "Ik woon in Almere.", "Het is koud vandaag.", "Ik ben om negen uur thuis."], e: "Bij ‘Wat kunt u goed?’ vertel je iets wat je goed kunt, bijvoorbeeld koken of fietsen." },
+      { t: "werk", q: "Waar stap je in de trein?", o: ["Op het station", "In de supermarkt", "In de bibliotheek", "Op het strand"], e: "Treinen vertrekken van een station." },
+      { t: "werk", q: "Welke zin is goed?", o: ["Ik ga met de bus naar mijn werk.", "Ik ga met de boek naar mijn werk.", "Ik ga met de water naar mijn werk.", "Ik ga met de rood naar mijn werk."], e: "Een bus is een vervoermiddel. Daarmee kun je naar je werk gaan." },
+      { t: "werk", q: "Wat is een ‘opleiding’?", o: ["Een studie of cursus waarin je iets leert", "Een lange wandeling", "Een soort restaurant", "Een nieuwe fiets"], e: "In een opleiding leer je een vak of een taal." },
+      { t: "werk", q: "Bij welk beroep werk je met zieke mensen?", o: ["Arts", "Bakker", "Chauffeur", "Kapper"], e: "Een arts (dokter) helpt zieke mensen." },
+
+      { t: "vrij", q: "Welk antwoord past bij ‘Wat doet u graag in uw vrije tijd?’", o: ["Ik wandel graag in het park.", "Ik ben vijftig jaar.", "Ik woon op de tweede verdieping.", "Ik heet Fatima."], e: "Je vertelt wat je leuk vindt om te doen als je vrij bent." },
+      { t: "vrij", q: "In welk seizoen kan het sneeuwen in Nederland?", o: ["In de winter", "In de zomer", "In juli", "In augustus"], e: "Sneeuw valt meestal in de winter." },
+      { t: "vrij", q: "Wat doe je op het ijs?", o: ["Schaatsen", "Zwemmen", "Wandelen", "Koken"], e: "Op het ijs kun je schaatsen." },
+      { t: "vrij", q: "Het regent. Wat neem je mee?", o: ["Een paraplu", "Een zonnebril", "Een badpak", "Een ijsje"], e: "Met een paraplu blijf je droog." },
+      { t: "vrij", q: "Wat is de goede zin in het verleden? ‘Ik ga op vakantie.’", o: ["Ik ben op vakantie geweest.", "Ik zal op vakantie.", "Ik ga op vakantie geweest.", "Ik ben op vakantie gaan."], e: "Het verleden is ‘Ik ben op vakantie geweest.’" },
+      { t: "vrij", q: "Welk antwoord past bij ‘Kunt u zwemmen?’", o: ["Ja, ik kan goed zwemmen.", "Ja, ik heb een groene broek.", "Nee, het is kwart over drie.", "Ik woon in de stad."], e: "Je antwoordt met ja of nee en je zegt iets over zwemmen." },
+      { t: "vrij", q: "Welke maanden horen bij de zomer?", o: ["Juni, juli en augustus", "December, januari en februari", "Maart, april en mei", "September, oktober en november"], e: "De zomer is de warmste tijd van het jaar." },
+      { t: "vrij", q: "Hoeveel seizoenen heeft een jaar?", o: ["Vier", "Twee", "Drie", "Zes"], e: "Lente, zomer, herfst en winter: vier seizoenen." },
+      { t: "vrij", q: "Wat doe je met een telefoon?", o: ["Bellen en berichten sturen", "Soep eten", "Schaatsen", "Fietsen"], e: "Met een telefoon kun je bellen en appen." },
+      { t: "vrij", q: "Je mengt rood en geel. Welke kleur krijg je?", o: ["Oranje", "Groen", "Paars", "Zwart"], e: "Rood en geel samen maken oranje." },
+
+      { t: "wonen", q: "Welk antwoord past bij ‘Hoeveel kamers heeft uw huis?’", o: ["Mijn huis heeft vier kamers.", "Ik heb twee fietsen.", "Ik werk in een winkel.", "Het is zomer."], e: "Je noemt het aantal kamers." },
+      { t: "wonen", q: "In welke kamer zit je op de bank en kijk je tv?", o: ["De woonkamer", "De badkamer", "De keuken", "De slaapkamer"], e: "Op de bank zit je in de woonkamer." },
+      { t: "wonen", q: "In welke kamer slaap je?", o: ["De slaapkamer", "De keuken", "De gang", "De badkamer"], e: "In de slaapkamer staat je bed." },
+      { t: "wonen", q: "Wie zijn je buren?", o: ["De mensen die naast je wonen", "De mensen in je familie", "De mensen op je werk", "De mensen in de winkel"], e: "Buren wonen naast of dicht bij jou." },
+      { t: "wonen", q: "Waar doe je boodschappen?", o: ["In de supermarkt", "In het ziekenhuis", "Op school", "In de bioscoop"], e: "Brood en melk koop je in de supermarkt." },
+      { t: "wonen", q: "‘De straat is druk.’ Wat betekent dat?", o: ["Er zijn veel mensen en auto’s", "Er is niemand", "Het is een nieuwe straat", "De straat is mooi"], e: "Druk betekent: veel mensen of veel verkeer." },
+      { t: "wonen", q: "Wat is het tegenovergestelde van ‘rustig’?", o: ["Druk", "Stil", "Klein", "Mooi"], e: "Rustig is stil. Het tegenovergestelde is druk." },
+      { t: "wonen", q: "Welk antwoord past bij ‘Met wie woont u?’", o: ["Ik woon met mijn man en mijn kinderen.", "Ik woon in Almere.", "Ik woon sinds 2020 hier.", "Ik woon in een groot huis."], e: "‘Met wie’ gaat over personen." },
+      { t: "wonen", q: "Hoe heet de plek waar je kookt?", o: ["De keuken", "De slaapkamer", "De tuin", "De garage"], e: "In de keuken kook je het eten." },
+
+      { t: "alg", q: "Wat is de hoofdstad van Nederland?", o: ["Amsterdam", "Rotterdam", "Utrecht", "Eindhoven"], e: "Amsterdam is de hoofdstad. De regering zit in Den Haag." },
+      { t: "alg", q: "Welke kleuren heeft de Nederlandse vlag?", o: ["Rood, wit en blauw", "Rood, geel en groen", "Oranje, wit en groen", "Blauw, geel en zwart"], e: "De vlag is rood, wit en blauw." },
+      { t: "alg", q: "Welk nummer bel je bij een noodgeval?", o: ["112", "100", "911", "0800"], e: "In Nederland bel je 112 voor politie, brandweer en ambulance." },
+      { t: "alg", q: "Welke munt gebruiken ze in Nederland?", o: ["De euro", "De dollar", "Het pond", "De frank"], e: "In Nederland betaal je met euro’s." },
+      { t: "alg", q: "Welk vervoermiddel gebruiken heel veel mensen in Nederland?", o: ["De fiets", "Het paard", "De kameel", "De ezel"], e: "Nederland is een echt fietsland." },
+      { t: "alg", q: "Hoeveel dagen heeft een week?", o: ["Zeven", "Vijf", "Zes", "Tien"], e: "Een week heeft zeven dagen." },
+      { t: "alg", q: "Hoeveel minuten heeft een uur?", o: ["Zestig", "Dertig", "Honderd", "Twaalf"], e: "Een uur is zestig minuten." },
+      { t: "alg", q: "Welk land ligt ten oosten van Nederland?", o: ["Duitsland", "België", "Frankrijk", "Spanje"], e: "Duitsland ligt aan de oostkant van Nederland." },
+      { t: "alg", q: "Hoeveel is 8 + 7?", o: ["15", "14", "16", "17"], e: "8 + 7 = 15." },
+      { t: "alg", q: "Op welke dag is het Koningsdag in Nederland?", o: ["27 april", "1 januari", "5 mei", "25 december"], e: "Koningsdag is elk jaar op 27 april." }
+    ];
+
+    const TALK_THEMES = {
+      werk: { icon: "💼", name: "Werk, opleiding en vervoer", cards: [
+        "Hebt u werk?",
+        "Wat voor werk doet u? Leg uit wat u doet op uw werk.",
+        "Werkt u alleen, of werkt u samen met mensen? Wat vindt u daarvan?",
+        "Hoe lang doet u dat werk al?",
+        "Wat doet u meestal overdag?",
+        "Wat doet u normaal in de middag?",
+        "Zou u vrijwilligerswerk willen doen? Wat wilt u doen?",
+        "Wat voor werk vindt u leuk?",
+        "Hebt u een opleiding gedaan?",
+        "Vertel eens iets over uw opleiding.",
+        "Zou u een opleiding willen doen? Waarom?",
+        "Wat kunt u goed?",
+        "Wat kunt u minder goed?",
+        "Wat wilt u beter kunnen?",
+        "Bent u vroeger naar school geweest?",
+        "Wat leerde u daar?",
+        "Hoe ging u naar school?",
+        "Wat vond u van de leraren?",
+        "Wat deed u vroeger overdag?",
+        "Wat deed u vroeger in de ochtend of de middag?",
+        "Wat deed u vroeger in de avond?",
+        "Gaat u weleens met de bus? Waarheen?",
+        "Gaat u weleens met de trein? Waarheen?",
+        "Hebt u een rijbewijs?",
+        "Waarheen rijdt u met de auto?"
+      ] },
+      vrij: { icon: "🌞", name: "Vrije tijd", cards: [
+        "Wat doet u graag in uw vrije tijd?",
+        "Vindt u het leuk om te koken? Waarom (niet)?",
+        "Vindt u het fijn om uit eten te gaan? Waarom (niet)?",
+        "Houdt u meer van de lente, of meer van de zomer? Waarom?",
+        "Gaat u op vakantie? Waar naartoe?",
+        "Gaat u met de auto, de trein, het vliegtuig, de bus of de boot?",
+        "Hoe lang bent u dan onderweg? Hoe lang moet u reizen?",
+        "Wat gaat u daar doen?",
+        "Bent u vroeger op vakantie geweest?",
+        "Hoe ging u daar naartoe? Hoe lang was u onderweg?",
+        "Wat hebt u daar gedaan?",
+        "Wandelt u weleens? Waar wandelt u graag? Wanneer doet u dat?",
+        "Wat vindt u fijn om te doen als het zomer is? Hoe vaak doet u dat?",
+        "Kunt u zwemmen? Waar doet u dat?",
+        "Zwemt u graag in de zee? Waarom (niet)?",
+        "Wilt u leren zwemmen? Waarom (niet)?",
+        "Bent u weleens naar het strand geweest? Hoe vond u dat?",
+        "Wat vond u (niet) leuk aan het strand?",
+        "Wat vindt u van de winter? Wat vindt u (niet) fijn aan de winter?",
+        "Wat doet u het liefst in de winter?",
+        "Kunt u schaatsen? Hoe vaak doet u dat? Waar hebt u dat geleerd?",
+        "Zou u willen leren schaatsen? Waarom (niet)?",
+        "Wat doet u als het regent?",
+        "Is het weer in Nederland anders dan in uw geboorteland? Leg uit wat er anders is.",
+        "Welke kleren draagt u als het koud is?",
+        "Hebt u een favoriete kleur? Welke kleur is dat?",
+        "Welke kleuren hebben uw kleren vandaag?",
+        "Gebruikt u de telefoon vaak? Waarvoor?",
+        "Gebruikt u het internet vaak? Waarvoor gebruikt u het?",
+        "Welk feest vierde u het liefst in uw geboorteland? Hoe deed u dat?"
+      ] },
+      wonen: { icon: "🏠", name: "Wonen", cards: [
+        "Waar woont u nu?",
+        "Hoe ziet uw huis eruit? Vindt u het mooi?",
+        "Met wie woont u daar?",
+        "Vindt u het een fijn huis, of wilt u liever in een ander huis wonen? Waarom?",
+        "Hoeveel kamers heeft uw huis?",
+        "Beschrijf uw woonkamer. Hoe ziet uw woonkamer eruit?",
+        "Is de straat waar u woont druk of rustig? Wat vindt u daarvan?",
+        "Is er veel lawaai in uw straat?",
+        "Zijn er veel mensen en auto’s in de straat?",
+        "Wat vindt u van de mensen die in uw straat wonen? Waarom?",
+        "Wat vindt u (niet) leuk aan de mensen in uw straat?",
+        "Praat u weleens Nederlands met de mensen uit uw straat?",
+        "Kent u uw buren? Vertel ook hoe vaak u ze spreekt.",
+        "Praat u soms met uw buren? Hoe vaak?",
+        "Waar doet u boodschappen? Vertel ook waarom u daar boodschappen doet.",
+        "Zijn er veel winkels in de buurt? Wat voor winkels?",
+        "Zijn er veel winkels dichtbij uw huis?"
+      ] }
+    };
+
+    let quiz = null;
+    let talk = null;
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function speakText(text) {
+      try {
+        if (!("speechSynthesis" in window)) return alert("Voorlezen werkt niet in deze browser.");
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = "nl-NL";
+        u.rate = 0.85;
+        speechSynthesis.speak(u);
+      } catch (_) {}
+    }
+
+    function makeEduPromo() {
+      const t = getTab("edu");
+      const box = document.createElement("div");
+      box.className = "section-block";
+      box.innerHTML = `
+        <h2>${escapeHtml(t.icon)} ${escapeHtml(t.name)} <small>Nederlands A1</small></h2>
+        <div class="edu-grid">
+          <button type="button" class="edu-card" onclick="openQuizSetup()">
+            <span class="edu-emoji">📝</span><strong>A1-quiz</strong>
+            <span>Kies het juiste antwoord, met uitleg.</span>
+          </button>
+          <button type="button" class="edu-card" onclick="openTalkSetup()">
+            <span class="edu-emoji">🗣️</span><strong>Spreekoefening</strong>
+            <span>Alle vragen over werk, vrije tijd en wonen.</span>
+          </button>
+        </div>`;
+      return box;
+    }
+
+    function renderEducation(area) {
+      area.appendChild(makeEduPromo());
+    }
+
+    function openEdu(title) {
+      document.getElementById("eduTitle").textContent = title;
+      document.getElementById("eduOverlay").classList.add("open");
+    }
+
+    function closeEdu() {
+      try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (_) {}
+      document.getElementById("eduOverlay").classList.remove("open");
+    }
+
+    function eduHtml(html) {
+      document.getElementById("eduInner").innerHTML = html;
+      document.getElementById("eduBody").scrollTop = 0;
+    }
+
+    function openQuizSetup() {
+      openEdu("A1-quiz");
+      const best = readJson(QUIZ_BEST_KEY, {});
+      const bestTxt = (id) => (best[id] != null ? ` · beste score: ${best[id]}` : "");
+      eduHtml(`
+        <h2>Kies een onderwerp</h2>
+        <p class="edu-sub">Elke quiz heeft maximaal 10 vragen. Na elk antwoord zie je meteen of het goed is.</p>
+        <div class="theme-list">
+          <button type="button" class="theme-btn" onclick="startQuiz('mix')"><span>🎲</span><b>Alles door elkaar</b><small>10 vragen${bestTxt("mix")}</small></button>
+          ${Object.entries(QUIZ_THEMES).map(([id, t]) => {
+            const n = QUIZ_BANK.filter(q => q.t === id).length;
+            return `<button type="button" class="theme-btn" onclick="startQuiz('${id}')"><span>${t.icon}</span><b>${escapeHtml(t.name)}</b><small>${Math.min(10, n)} vragen${bestTxt(id)}</small></button>`;
+          }).join("")}
+        </div>`);
+    }
+
+    function startQuiz(theme) {
+      const pool = theme === "mix" ? QUIZ_BANK : QUIZ_BANK.filter(q => q.t === theme);
+      const list = shuffle(pool).slice(0, 10).map(q => ({
+        q: q.q,
+        e: q.e,
+        opts: shuffle(q.o.map((text, i) => ({ text, ok: i === 0 })))
+      }));
+      quiz = { theme, list, i: 0, score: 0, answered: false, wrong: [] };
+      showQuizQuestion();
+    }
+
+    function showQuizQuestion() {
+      const q = quiz.list[quiz.i];
+      const pct = Math.round((quiz.i / quiz.list.length) * 100);
+      eduHtml(`
+        <div class="quiz-top"><span>Vraag ${quiz.i + 1} van ${quiz.list.length}</span><span>Score: ${quiz.score}</span></div>
+        <div class="quiz-bar"><div style="width:${pct}%"></div></div>
+        <div class="quiz-q"><span>${escapeHtml(q.q)}</span><button type="button" class="speak-btn" title="Lees voor" onclick="speakQuizQuestion()">🔊</button></div>
+        <div class="quiz-opts">
+          ${q.opts.map((o, k) => `<button type="button" class="quiz-opt" onclick="answerQuiz(${k})">${escapeHtml(o.text)}</button>`).join("")}
+        </div>
+        <div id="quizFeedback"></div>`);
+    }
+
+    function speakQuizQuestion() {
+      if (quiz) speakText(quiz.list[quiz.i].q);
+    }
+
+    function answerQuiz(k) {
+      if (!quiz || quiz.answered) return;
+      quiz.answered = true;
+      const q = quiz.list[quiz.i];
+      const ok = q.opts[k].ok;
+      if (ok) quiz.score++;
+      else quiz.wrong.push({ q: q.q, correct: q.opts.find(o => o.ok).text });
+      document.querySelectorAll(".quiz-opt").forEach((b, idx) => {
+        b.disabled = true;
+        if (q.opts[idx].ok) b.classList.add("right");
+        else if (idx === k) b.classList.add("wrong");
+      });
+      const last = quiz.i === quiz.list.length - 1;
+      document.getElementById("quizFeedback").innerHTML = `
+        <div class="quiz-fb ${ok ? "good" : "bad"}">
+          <b>${ok ? "Goed zo! 🎉" : "Helaas, dat is niet goed."}</b>
+          <div>${escapeHtml(q.e || "")}</div>
+        </div>
+        <button type="button" class="btn white big" onclick="nextQuiz()">${last ? "Bekijk je score" : "Volgende vraag →"}</button>`;
+    }
+
+    function nextQuiz() {
+      quiz.answered = false;
+      quiz.i++;
+      if (quiz.i >= quiz.list.length) showQuizResult();
+      else showQuizQuestion();
+    }
+
+    function showQuizResult() {
+      const total = quiz.list.length;
+      const s = quiz.score;
+      const best = readJson(QUIZ_BEST_KEY, {});
+      if (best[quiz.theme] == null || s > best[quiz.theme]) {
+        best[quiz.theme] = s;
+        localStorage.setItem(QUIZ_BEST_KEY, JSON.stringify(best));
+      }
+      const msg = s === total ? "Perfect! Alles goed! 🏆"
+        : s >= total * 0.7 ? "Heel goed gedaan! 👏"
+        : s >= total * 0.5 ? "Goed bezig, blijf oefenen! 💪"
+        : "Oefen nog even, je kunt het! 🌱";
+      eduHtml(`
+        <div class="quiz-result">
+          <div class="score-ring">${s}/${total}</div>
+          <h2>${msg}</h2>
+          ${quiz.wrong.length ? `
+            <h3>Dit ging fout:</h3>
+            <div class="wrong-list">
+              ${quiz.wrong.map(w => `<div><b>${escapeHtml(w.q)}</b><br>Goed antwoord: ${escapeHtml(w.correct)}</div>`).join("")}
+            </div>` : ""}
+          <div class="inline-row" style="justify-content:center;">
+            <button type="button" class="btn white big" onclick="startQuiz('${quiz.theme}')">Opnieuw</button>
+            <button type="button" class="btn big" onclick="openQuizSetup()">Ander onderwerp</button>
+          </div>
+        </div>`);
+    }
+
+    function openTalkSetup() {
+      openEdu("Spreekoefening");
+      eduHtml(`
+        <h2>Kies een onderwerp</h2>
+        <p class="edu-sub">Lees de vraag, zeg je antwoord hardop en typ het eventueel op. Met de knop 🔊 hoor je de vraag.</p>
+        <div class="theme-list">
+          ${Object.entries(TALK_THEMES).map(([id, t]) =>
+            `<button type="button" class="theme-btn" onclick="startTalk('${id}')"><span>${t.icon}</span><b>${escapeHtml(t.name)}</b><small>${t.cards.length} vragen</small></button>`
+          ).join("")}
+        </div>`);
+    }
+
+    function startTalk(id) {
+      talk = { id, list: TALK_THEMES[id].cards.slice(), i: 0 };
+      showTalkCard();
+    }
+
+    function showTalkCard() {
+      const t = TALK_THEMES[talk.id];
+      const total = talk.list.length;
+      eduHtml(`
+        <div class="quiz-top"><span>${t.icon} ${escapeHtml(t.name)}</span><span>${talk.i + 1} / ${total}</span></div>
+        <div class="quiz-bar"><div style="width:${Math.round(((talk.i + 1) / total) * 100)}%"></div></div>
+        <div class="talk-card">
+          <p>${escapeHtml(talk.list[talk.i])}</p>
+          <button type="button" class="btn big" onclick="speakTalk()">🔊 Lees voor</button>
+        </div>
+        <textarea class="talk-input" placeholder="Typ hier je antwoord (je mag het ook alleen hardop zeggen)..."></textarea>
+        <div class="inline-row">
+          <button type="button" class="btn" onclick="talkStep(-1)" ${talk.i === 0 ? "disabled" : ""}>← Vorige</button>
+          <button type="button" class="btn" onclick="shuffleTalk()">🔀 Door elkaar</button>
+          <button type="button" class="btn white" onclick="talkStep(1)">${talk.i === total - 1 ? "Klaar" : "Volgende →"}</button>
+        </div>`);
+    }
+
+    function talkStep(dir) {
+      const n = talk.i + dir;
+      if (n < 0) return;
+      if (n >= talk.list.length) { openTalkSetup(); return; }
+      talk.i = n;
+      showTalkCard();
+    }
+
+    function shuffleTalk() {
+      talk.list = shuffle(talk.list);
+      talk.i = 0;
+      showTalkCard();
+    }
+
+    function speakTalk() {
+      if (talk) speakText(talk.list[talk.i]);
     }
 
     // ===== Online opslag (Firebase Realtime Database via REST) =====
@@ -2337,6 +2918,45 @@
       }
     }
 
+    function inviteLinkFor(code) {
+      return location.origin + location.pathname + "#admin=" + encodeURIComponent(code);
+    }
+
+    function copyIssuedLink() {
+      if (!lastIssuedCode) return;
+      const link = inviteLinkFor(lastIssuedCode.code);
+      navigator.clipboard.writeText(link).then(
+        () => alert("Link gekopieerd. Stuur hem privé naar " + lastIssuedCode.name + "."),
+        () => prompt("Kopieer deze link:", link)
+      );
+    }
+
+    function hasInviteHash() {
+      return location.hash.startsWith("#admin=");
+    }
+
+    async function handleInviteLink() {
+      const code = decodeURIComponent(location.hash.slice("#admin=".length)).trim();
+      // Haal de code meteen uit de adresbalk
+      history.replaceState(null, "", location.pathname + location.search);
+      if (!code) return;
+      try {
+        await authLogin(code);
+        enterAdminMode();
+        localStorage.setItem(ADMIN_REMEMBER_KEY, "1");
+        saveAuthSession();
+        checkLockout();
+        render();
+        logAction("Ingelogd via uitnodigingslink");
+        loadLog();
+        alert(`Welkom ${adminName}! Je bent nu beheerder. Je ziet bovenaan de knoppen + Toevoegen en Beheer.`);
+      } catch (err) {
+        alert(err.message === "NO_ACCESS"
+          ? "Deze uitnodiging is ingetrokken of werkt niet meer."
+          : "Deze uitnodigingslink werkt niet. Vraag een nieuwe aan.");
+      }
+    }
+
     function copyIssuedCode() {
       if (!lastIssuedCode) return;
       navigator.clipboard.writeText(lastIssuedCode.code).then(
@@ -2358,9 +2978,13 @@
       issued.innerHTML = lastIssuedCode ? `
         <div class="issued">
           <div>Inlogcode voor <b>${escapeHtml(lastIssuedCode.name)}</b>:</div>
-          <code>${escapeHtml(lastIssuedCode.code)}</code>
-          <div class="admin-note" style="margin:6px 0 0;">Geef deze code aan die persoon. Je ziet hem alleen nu; verlies je hem, trek dan de rechten in en maak een nieuwe.</div>
-          <div class="inline-row" style="margin-top:8px;"><button type="button" class="btn" onclick="copyIssuedCode()">Kopieer code</button></div>
+          <div class="admin-note" style="margin:0;">Uitnodigingslink (open hem en je bent meteen beheerder):</div>
+          <code>${escapeHtml(inviteLinkFor(lastIssuedCode.code))}</code>
+          <div class="inline-row" style="margin-top:8px;">
+            <button type="button" class="btn white" onclick="copyIssuedLink()">Kopieer link</button>
+            <button type="button" class="btn" onclick="copyIssuedCode()">Alleen de code kopiëren</button>
+          </div>
+          <div class="admin-note" style="margin:8px 0 0;">Stuur de link alleen privé naar die persoon: wie de link heeft, is beheerder. Je ziet hem alleen nu; verlies je hem, trek dan de rechten in en maak een nieuwe.</div>
         </div>` : "";
       try {
         const res = await dbFetch("/admins");
@@ -2410,15 +3034,73 @@
     }
 
     function normalizeTabs(saved) {
-      const out = {};
-      Object.keys(DEFAULT_TABS).forEach(k => {
-        const c = saved && saved[k] ? saved[k] : {};
-        out[k] = {
-          label: (typeof c.label === "string" && c.label.trim()) ? c.label : DEFAULT_TABS[k].label,
-          visible: k === "all" ? true : (typeof c.visible === "boolean" ? c.visible : true)
-        };
+      let list = [];
+      if (Array.isArray(saved)) {
+        list = saved;
+      } else if (saved && typeof saved === "object") {
+        const vals = Object.values(saved);
+        if (vals.length && vals.every(v => v && typeof v === "object" && typeof v.id === "string")) {
+          list = vals;
+        } else {
+          // oude opslag: alleen zichtbaar/onzichtbaar per tab
+          list = DEFAULT_TAB_LIST.map(t => ({
+            ...t,
+            visible: t.id === "all" ? true : (saved[t.id] && typeof saved[t.id].visible === "boolean" ? saved[t.id].visible : true)
+          }));
+        }
+      }
+      const out = [];
+      const seen = new Set();
+      list.forEach(t => {
+        if (!t || typeof t.id !== "string") return;
+        const id = t.id.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40);
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        const def = DEFAULT_TAB_LIST.find(d => d.id === id);
+        out.push({
+          id,
+          name: (typeof t.name === "string" && t.name.trim()) ? t.name.trim().slice(0, 24) : (def ? def.name : "Tab"),
+          icon: (typeof t.icon === "string" && t.icon.trim()) ? t.icon.trim().slice(0, 12) : (def ? def.icon : "📁"),
+          visible: id === "all" ? true : (typeof t.visible === "boolean" ? t.visible : true),
+          type: BUILTIN_TYPES[id] || "content",
+          builtin: Boolean(def)
+        });
+      });
+      DEFAULT_TAB_LIST.forEach((d, i) => {
+        if (seen.has(d.id)) return;
+        const copy = { ...d };
+        if (d.id === "all") out.unshift(copy);
+        else out.splice(Math.min(i, out.length), 0, copy);
       });
       return out;
+    }
+
+    function getTab(id) {
+      return tabsConfig.find(t => t.id === id);
+    }
+
+    function contentTabs() {
+      return tabsConfig.filter(t => t.type === "content");
+    }
+
+    function itemTabId(item) {
+      return contentTabs().some(t => t.id === item.category) ? item.category : "games";
+    }
+
+    function defaultIconFor(category) {
+      const t = getTab(category);
+      return (t && t.icon) || "🎮";
+    }
+
+    function fillCategorySelects() {
+      const opts = contentTabs().map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.icon)} ${escapeHtml(t.name)}</option>`).join("");
+      ["itemCat", "editCat"].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const cur = el.value;
+        el.innerHTML = opts;
+        if (cur && contentTabs().some(t => t.id === cur)) el.value = cur;
+      });
     }
 
     function buildPublicState() {
@@ -2439,7 +3121,7 @@
       let items = Array.isArray(d.items) ? d.items : (d.items && typeof d.items === "object" ? Object.values(d.items) : []);
       customItems = items
         .filter(i => i && typeof i.id === "string" && typeof i.title === "string")
-        .map(i => ({ ...i, icon: typeof i.icon === "string" && i.icon ? i.icon : "🎮", category: i.category === "apps" ? "apps" : "games" }));
+        .map(i => ({ ...i, icon: typeof i.icon === "string" && i.icon ? i.icon : "🎮", category: typeof i.category === "string" && i.category ? i.category : "games" }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(customItems));
 
       setOrRemove(BANNER_KEY, d.banner);
@@ -2548,7 +3230,10 @@
       document.getElementById("accentPicker").value = savedAccent;
     }
     if (AUTH_ON) {
-      restoreAuthSession();
+      // Ook als de site al openstaat en iemand plakt de link erbij
+      window.addEventListener("hashchange", () => { if (hasInviteHash()) handleInviteLink(); });
+      if (hasInviteHash()) handleInviteLink();
+      else restoreAuthSession();
     } else if (localStorage.getItem(ADMIN_REMEMBER_KEY) === "1") {
       isAdmin = true;
       document.body.classList.add("admin-unlocked");
@@ -2556,8 +3241,7 @@
 
     // Haalt een witte achtergrond uit logo.png weg (alleen wit dat aan de rand zit)
     (function cleanLogo() {
-      const img = document.querySelector(".brand-logo");
-      if (!img) return;
+      document.querySelectorAll(".brand-logo").forEach(img => {
       function strip() {
         try {
           const w = img.naturalWidth, h = img.naturalHeight;
@@ -2596,8 +3280,10 @@
       }
       if (img.complete && img.naturalWidth) strip();
       else img.addEventListener("load", strip);
+      });
     })();
     applySearchVisible();
+    fillCategorySelects();
     renderNav();
     renderBanner();
     render();
@@ -2605,9 +3291,23 @@
     setInterval(checkLockout, 1000);
 
     // Online opslag: haal de nieuwste games op, en ververs elke 20 sec voor bezoekers
-    loadCloud();
+    const cloudInit = loadCloud();
     setInterval(() => { if (!isAdmin && !document.hidden) loadCloud(); }, 20000);
     setInterval(adminTick, 20000);
+
+    // Laadscherm: weg zodra de pagina en de online games klaar zijn
+    (function hideLoader() {
+      const loader = document.getElementById("loader");
+      if (!loader) return;
+      const wait = (ms) => new Promise(r => setTimeout(r, ms));
+      const loaded = document.readyState === "complete" ? Promise.resolve() : new Promise(r => window.addEventListener("load", r, { once: true }));
+      const done = () => {
+        loader.classList.add("hide");
+        setTimeout(() => loader.remove(), 800);
+      };
+      Promise.all([wait(1500), loaded, Promise.race([cloudInit.catch(() => {}), wait(3500)])]).then(done);
+      setTimeout(done, 6000);
+    })();
   </script>
 </body>
 </html>
