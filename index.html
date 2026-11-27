@@ -843,6 +843,35 @@
     .icon-tile:hover { background: #1f1f1f; }
     .icon-tile.active { border-color: #fff; background: #262626; }
     @media (max-width: 640px) { .icon-tiles { grid-template-columns: repeat(4, 1fr); } }
+
+    /* Chat + bezoekers */
+    .chat-fab {
+      position: fixed; right: 18px; bottom: 18px; z-index: 40;
+      width: 56px; height: 56px; border-radius: 50%; font-size: 1.5rem;
+      background: var(--acc); color: #fff; border: none; cursor: pointer;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+    }
+    .chat-badge {
+      position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 6px;
+      border-radius: 999px; background: #ef4444; color: #fff; font-size: 0.75rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .chat-panel {
+      display: none; position: fixed; right: 18px; bottom: 86px; z-index: 41;
+      width: min(360px, calc(100vw - 36px)); height: min(460px, 70vh);
+      flex-direction: column; background: #0b1222; border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .chat-panel.open { display: flex; }
+    .chat-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    .chat-name, .chat-form { display: flex; gap: 8px; padding: 10px 12px; }
+    .chat-msgs { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .chat-msg { max-width: 82%; padding: 8px 12px; border-radius: 14px; font-size: 0.9rem; line-height: 1.35; word-break: break-word; }
+    .chat-msg.me { align-self: flex-end; background: var(--acc); }
+    .chat-msg.them { align-self: flex-start; background: rgba(255,255,255,0.1); }
+    .chat-msg small { display: block; opacity: 0.65; font-size: 0.7rem; margin-bottom: 2px; }
+    #adminChatBox .chat-msgs { max-height: 260px; background: rgba(255,255,255,0.03); border-radius: 12px; }
+    #noticeText { width: 100%; background: #050914; border: 1px solid var(--border); color: #fff; border-radius: 12px; padding: 10px 12px; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -942,6 +971,7 @@
     <div class="admin-shell">
       <aside class="admin-side">
         <button type="button" class="side-btn" id="side-mensen" onclick="openPanel('mensen')">Mensen</button>
+        <button type="button" class="side-btn" id="side-bezoekers" onclick="openPanel('bezoekers')">Bezoekers &amp; chat</button>
         <button type="button" class="side-btn" id="side-logboek" onclick="openPanel('logboek')">Logboek</button>
         <button type="button" class="side-btn master-only" id="side-beheerders" onclick="openPanel('beheerders')">Beheerders</button>
         <button type="button" class="side-btn" id="side-tabs" onclick="openPanel('tabs')">Tabs</button>
@@ -973,15 +1003,7 @@
               <div class="stat"><b id="statPunish">Uit</b><span>groepsstraf</span></div>
               <div class="stat"><b id="statItems">0</b><span>games &amp; apps</span></div>
             </div>
-            <p class="admin-note">Let op: bans en groepsstraf werken alleen in deze browser. Een echte ban voor iedereen heeft een server nodig.</p>
-            <div class="box-card">
-              <h4>Ban-overzicht</h4>
-              <div class="inline-row">
-                <input type="text" id="banInput" placeholder="Naam of ID om te blokkeren...">
-                <button type="button" class="btn danger" onclick="addBan()">Ban</button>
-              </div>
-              <div class="ban-list" id="banList"></div>
-            </div>
+            <p class="admin-note">Echte bans, chatten met bezoekers en een bericht aan iedereen vind je bij <b>Bezoekers &amp; chat</b>. De groepsstraf hieronder zet iedereen tijdelijk buiten.</p>
             <div class="box-card">
               <h4>Antwoorden en groepsstraf</h4>
               <div class="inline-row" style="margin-bottom:10px;">
@@ -995,6 +1017,46 @@
               <div class="inline-row">
                 <button type="button" class="btn pri" onclick="startGroupPunishment()">Groepsstraf geven</button>
                 <button type="button" class="btn" onclick="liftGroupPunishment()">Laatste groepsstraf opheffen</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bezoekers & chat -->
+          <div id="sec-bezoekers" style="display:none;">
+            <div id="visitorsNotice"></div>
+            <div id="visitorsBody">
+              <div class="box-card">
+                <h4>Bericht aan iedereen</h4>
+                <p class="admin-note">Een melding die elke bezoeker één keer als pop-up ziet.</p>
+                <textarea id="noticeText" maxlength="300" placeholder="Bijv. Er komen vanavond nieuwe games!" style="min-height:70px;"></textarea>
+                <div class="inline-row" style="margin-top:8px;">
+                  <button type="button" class="btn pri" onclick="sendNotice()">Versturen</button>
+                  <button type="button" class="btn" onclick="clearNotice()">Bericht intrekken</button>
+                </div>
+              </div>
+              <div class="box-card">
+                <h4>Site-opties</h4>
+                <label class="sw" style="margin-bottom:10px;"><input type="checkbox" class="toggle" id="optMaintenance"> Onderhoudsmodus (bezoekers zien een pauzescherm)</label>
+                <input type="text" id="optMaintenanceText" maxlength="120" placeholder="Tekst voor het pauzescherm (mag leeg)" class="mini-input" style="width:100%;margin-bottom:10px;">
+                <label class="sw" style="margin-bottom:10px;"><input type="checkbox" class="toggle" id="optChat" checked> Chat voor bezoekers aan</label>
+                <div><button type="button" class="btn pri" onclick="saveSiteOptions()">Opslaan</button></div>
+              </div>
+              <div class="box-card">
+                <h4>Bezoekers</h4>
+                <div id="visitorList"></div>
+              </div>
+              <div class="box-card">
+                <h4>Geblokkeerd</h4>
+                <div id="banListReal"></div>
+              </div>
+              <div class="box-card" id="adminChatBox" style="display:none;">
+                <h4 id="adminChatTitle">Chat</h4>
+                <div class="chat-msgs" id="adminChatMsgs"></div>
+                <div class="inline-row" style="margin-top:8px;">
+                  <input type="text" id="adminChatInput" maxlength="300" placeholder="Typ een bericht..." onkeydown="if(event.key==='Enter')sendAdminChat()">
+                  <button type="button" class="btn pri" onclick="sendAdminChat()">Sturen</button>
+                  <button type="button" class="btn" onclick="closeAdminChat()">Sluiten</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1225,6 +1287,58 @@
     </div>
   </div>
 
+  <!-- Ban Modal -->
+  <div class="overlay" id="banModal" style="z-index:80;">
+    <div class="dialog" style="max-width:420px;">
+      <h3>Bezoeker blokkeren</h3>
+      <p class="admin-note" id="banWho"></p>
+      <div class="field">
+        <label for="banDuration">Hoe lang?</label>
+        <select id="banDuration">
+          <option value="10">10 minuten</option>
+          <option value="60">1 uur</option>
+          <option value="1440">1 dag</option>
+          <option value="10080">7 dagen</option>
+          <option value="0">Voor altijd</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="banReason">Reden (zien ze zelf)</label>
+        <input type="text" id="banReason" maxlength="120" placeholder="Bijv. Spam in de chat">
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" onclick="closeBanModal()">Annuleren</button>
+        <button type="button" class="btn danger" onclick="confirmBan()">Blokkeren</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bericht van de beheerder (bezoekers) -->
+  <div class="overlay" id="noticeModal" style="z-index:85;">
+    <div class="dialog" style="max-width:420px;text-align:center;">
+      <h3>📢 Bericht van de beheerder</h3>
+      <p id="noticeShown" style="margin:12px 0 18px;line-height:1.5;"></p>
+      <div class="dialog-actions" style="justify-content:center;">
+        <button type="button" class="btn pri" onclick="closeNoticeModal()">Oké</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat voor bezoekers -->
+  <button type="button" class="chat-fab" id="chatFab" onclick="toggleChat()" title="Chat met de beheerder" style="display:none;">💬<span class="chat-badge" id="chatBadge" style="display:none;"></span></button>
+  <div class="chat-panel" id="chatPanel">
+    <div class="chat-head"><b>Chat met de beheerder</b><button type="button" class="icon-btn" onclick="toggleChat()">✕</button></div>
+    <div class="chat-name" id="chatNameRow">
+      <input type="text" id="chatNameInput" maxlength="30" placeholder="Hoe heet je?" class="mini-input" style="flex:1;" onkeydown="if(event.key==='Enter')saveChatName()">
+      <button type="button" class="btn pri" onclick="saveChatName()">Oké</button>
+    </div>
+    <div class="chat-msgs" id="chatMsgs"></div>
+    <div class="chat-form" id="chatForm">
+      <input type="text" id="chatInput" maxlength="300" placeholder="Typ een bericht..." class="mini-input" style="flex:1;" onkeydown="if(event.key==='Enter')sendChat()">
+      <button type="button" class="btn pri" onclick="sendChat()">Sturen</button>
+    </div>
+  </div>
+
   <!-- Player Modal -->
   <div class="player" id="player">
     <div class="player-bar">
@@ -1362,6 +1476,7 @@
       mensen:       ["Mensen", "Wie er niet meer binnen mag, en tijdelijke groepsstraf"],
       logboek:      ["Logboek", "Alles wat beheerders hebben gedaan, met naam en tijd"],
       beheerders:   ["Beheerders", "Geef anderen admin, bekijk wat ze doen en neem het weer af"],
+      bezoekers:    ["Bezoekers & chat", "Blokkeer mensen, chat met bezoekers en stuur berichten naar iedereen"],
       tabs:         ["Tabs", "Maak tabs, geef ze een naam en kies een symbool"],
       apps:         ["Apps & games", "Alles op één plek: openen, bewerken, verbergen en verwijderen"],
       banners:      ["Banners", "Een balk bovenaan de hub"],
@@ -1518,6 +1633,7 @@
       if (section === "mensen") { renderBans(); renderStats(); }
       if (section === "logboek") { renderLog(); loadLog(); }
       if (section === "beheerders") renderHelperList();
+      if (section === "bezoekers") renderVisitorsPanel();
       if (section === "tabs") { tabsDraft = []; iconPickerFor = -1; renderTabsEditor(); }
       if (section === "apps") { renderAdminItems(); toggleAddForm(openForm); }
       if (section === "banners") {
@@ -1537,6 +1653,7 @@
     }
 
     function closePanel() {
+      clearInterval(adminChatTimer);
       document.getElementById("adminPanelModal").classList.remove("open");
     }
 
@@ -1547,7 +1664,7 @@
     }
 
     function renderStats() {
-      document.getElementById("statBans").textContent = bans.length;
+      document.getElementById("statBans").textContent = Object.keys(bansCache).length;
       const until = Number(localStorage.getItem(PUNISH_KEY) || 0);
       document.getElementById("statPunish").textContent = until > Date.now() ? "Actief" : "Uit";
       document.getElementById("statItems").textContent = getAllItems().length;
@@ -2055,6 +2172,7 @@
     function renderBans() {
       const el = document.getElementById("banList");
       renderStats();
+      if (!el) return;
       if (!bans.length) {
         el.innerHTML = `<div style="color:#94a3b8;font-size:0.85rem;">Geen geblokkeerde personen in de lijst.</div>`;
         return;
@@ -2094,8 +2212,25 @@
 
     function checkLockout() {
       const screen = document.getElementById("lockoutScreen");
+      updateChatFab();
       if (isAdmin) {
         screen.classList.remove("active");
+        return;
+      }
+      if (activeBan) {
+        document.getElementById("lockTitle").textContent = "Je bent geblokkeerd";
+        document.getElementById("lockReason").textContent = activeBan.reason ? "Reden: " + activeBan.reason : "Je mag deze hub niet gebruiken.";
+        document.getElementById("lockTimer").textContent = activeBan.until
+          ? "Nog " + Math.max(1, Math.ceil((activeBan.until - Date.now()) / 60000)) + " minuten"
+          : "Dit is permanent.";
+        screen.classList.add("active");
+        return;
+      }
+      if (siteSettings.maintenance) {
+        document.getElementById("lockTitle").textContent = "Even pauze";
+        document.getElementById("lockReason").textContent = siteSettings.maintenanceText || "We zijn zo terug.";
+        document.getElementById("lockTimer").textContent = "";
+        screen.classList.add("active");
         return;
       }
       const until = Number(localStorage.getItem(PUNISH_KEY) || 0);
@@ -2903,6 +3038,8 @@
 
     function enterAdminMode() {
       isAdmin = true;
+      // een beheerder hoort niet in de bezoekerslijst te staan
+      try { dbFetch("/visitors/" + visitorId, { method: "DELETE" }).catch(() => {}); } catch (_) {}
       document.body.classList.add("admin-unlocked");
       document.body.classList.toggle("is-master", isMaster);
     }
@@ -2974,6 +3111,340 @@
         if (document.getElementById("sec-logboek").style.display === "block") renderLog();
         if (document.getElementById("sec-beheerders").style.display === "block") renderHelperList();
       } catch (_) {}
+    }
+
+
+    // ===== Bezoekers: echte bans, chat, berichten en site-opties =====
+    const VID_KEY = "irfanhub_vid_v1";
+    const VNAME_KEY = "irfanhub_vname_v1";
+    const VREAD_KEY = "irfanhub_vread_v1";
+    const VMSG_KEY = "irfanhub_vmsg_v1";
+    const NOTICE_SEEN_KEY = "irfanhub_notice_seen_v1";
+    const ADMIN_READ_KEY = "irfanhub_admin_read_v1";
+
+    let visitorId = (function () {
+      let v = localStorage.getItem(VID_KEY) || "";
+      if (!/^[a-z0-9]{10,24}$/.test(v)) {
+        v = randomText(16);
+        localStorage.setItem(VID_KEY, v);
+      }
+      return v;
+    })();
+    let visitorName = localStorage.getItem(VNAME_KEY) || "";
+    let activeBan = null;
+    let siteSettings = { maintenance: false, maintenanceText: "", chat: true };
+    let bansCache = {};
+    let visitorsCache = {};
+    let chatOpen = false;
+    let chatTimer = null;
+    let lastSendAt = 0;
+    let chatWith = null;
+    let adminChatTimer = null;
+
+    function pubFetch(path, opts = {}) {
+      const hasBody = opts.body !== undefined;
+      return fetch(CLOUD_BASE + path + ".json" + (opts.query ? "?" + opts.query : ""), {
+        method: opts.method || "GET",
+        headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+        body: hasBody ? JSON.stringify(opts.body) : undefined,
+        cache: "no-store"
+      });
+    }
+
+    function updateChatFab() {
+      const fab = document.getElementById("chatFab");
+      if (!fab) return;
+      const show = CLOUD_ON && !isAdmin && !activeBan && siteSettings.chat !== false;
+      fab.style.display = show ? "block" : "none";
+      if (!show) document.getElementById("chatPanel").classList.remove("open");
+    }
+
+    async function visitorTick() {
+      if (!CLOUD_ON || document.hidden) return;
+      try {
+        const [banRes, setRes, noticeRes] = await Promise.all([
+          pubFetch("/bans/" + visitorId), pubFetch("/settings"), pubFetch("/notice")
+        ]);
+        const ban = banRes.ok ? await banRes.json() : null;
+        activeBan = ban && typeof ban === "object" && (!ban.until || ban.until > Date.now()) ? ban : null;
+        const st = setRes.ok ? await setRes.json() : null;
+        siteSettings = {
+          maintenance: Boolean(st && st.maintenance),
+          maintenanceText: st && typeof st.maintenanceText === "string" ? st.maintenanceText : "",
+          chat: !(st && st.chat === false)
+        };
+        const notice = noticeRes.ok ? await noticeRes.json() : null;
+        if (!isAdmin && notice && notice.id && notice.text && localStorage.getItem(NOTICE_SEEN_KEY) !== notice.id) {
+          localStorage.setItem(NOTICE_SEEN_KEY, notice.id);
+          document.getElementById("noticeShown").textContent = notice.text;
+          document.getElementById("noticeModal").classList.add("open");
+        }
+      } catch (_) {}
+      checkLockout();
+      if (isAdmin) return;
+      try {
+        const body = { seen: Date.now() };
+        if (visitorName) body.name = visitorName;
+        const lm = Number(localStorage.getItem(VMSG_KEY) || 0);
+        if (lm) body.lastMsg = lm;
+        await pubFetch("/visitors/" + visitorId, { method: "PUT", body });
+      } catch (_) {}
+      if (!activeBan && siteSettings.chat !== false) fetchThread();
+    }
+
+    function closeNoticeModal() {
+      document.getElementById("noticeModal").classList.remove("open");
+    }
+
+    // ----- chat (bezoeker) -----
+    async function fetchThread() {
+      try {
+        const res = await pubFetch("/thread/" + visitorId, { query: "orderBy=%22%24key%22&limitToLast=40" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const msgs = Object.values(data || {}).filter(m => m && typeof m.t === "number" && typeof m.text === "string").sort((a, b) => a.t - b.t);
+        const lastRead = Number(localStorage.getItem(VREAD_KEY) || 0);
+        const unread = msgs.filter(m => m.from === "a" && m.t > lastRead).length;
+        const badge = document.getElementById("chatBadge");
+        badge.textContent = unread;
+        badge.style.display = unread && !chatOpen ? "flex" : "none";
+        if (chatOpen) {
+          renderThread("chatMsgs", msgs, "u");
+          if (msgs.length) localStorage.setItem(VREAD_KEY, String(Math.max(...msgs.map(m => m.t))));
+        }
+      } catch (_) {}
+    }
+
+    function renderThread(elId, msgs, me) {
+      const el = document.getElementById(elId);
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+      el.innerHTML = msgs.length ? msgs.map(m => `
+        <div class="chat-msg ${m.from === me ? "me" : "them"}">
+          <small>${escapeHtml(m.from === "a" ? (m.name || "Beheerder") : (m.name || "Bezoeker"))} · ${escapeHtml(timeAgo(m.t))}</small>
+          ${escapeHtml(m.text)}
+        </div>`).join("") : `<div class="empty-note">Nog geen berichten.</div>`;
+      if (atBottom) el.scrollTop = el.scrollHeight;
+    }
+
+    function toggleChat() {
+      chatOpen = !chatOpen;
+      document.getElementById("chatPanel").classList.toggle("open", chatOpen);
+      document.getElementById("chatNameRow").style.display = visitorName ? "none" : "flex";
+      document.getElementById("chatForm").style.display = visitorName ? "flex" : "none";
+      clearInterval(chatTimer);
+      if (chatOpen) {
+        document.getElementById("chatBadge").style.display = "none";
+        fetchThread();
+        chatTimer = setInterval(fetchThread, 4000);
+      }
+    }
+
+    function saveChatName() {
+      const v = document.getElementById("chatNameInput").value.trim().slice(0, 30);
+      if (!v) return;
+      visitorName = v;
+      localStorage.setItem(VNAME_KEY, v);
+      document.getElementById("chatNameRow").style.display = "none";
+      document.getElementById("chatForm").style.display = "flex";
+      visitorTick();
+    }
+
+    async function sendChat() {
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text || Date.now() - lastSendAt < 1500) return;
+      lastSendAt = Date.now();
+      input.value = "";
+      const t = Date.now();
+      try {
+        const res = await pubFetch("/thread/" + visitorId, { method: "POST", body: { t, from: "u", name: visitorName, text } });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        localStorage.setItem(VMSG_KEY, String(t));
+        pubFetch("/visitors/" + visitorId, { method: "PUT", body: { seen: t, name: visitorName, lastMsg: t } });
+        fetchThread();
+      } catch (_) {
+        input.value = text;
+        alert("Versturen mislukt. Probeer het zo nog eens.");
+      }
+    }
+
+    // ----- beheer: bezoekers, bans, chat, opties -----
+    function readMap() {
+      try { return JSON.parse(localStorage.getItem(ADMIN_READ_KEY) || "{}") || {}; } catch (_) { return {}; }
+    }
+
+    async function renderVisitorsPanel() {
+      const notice = document.getElementById("visitorsNotice");
+      const body = document.getElementById("visitorsBody");
+      if (!AUTH_ON) {
+        body.style.display = "none";
+        notice.innerHTML = `<div class="box-card"><h4>Eerst de Firebase-login instellen</h4><p class="admin-note">Bans en chat werken pas als je Firebase-login en de nieuwe Rules klaar zijn.</p></div>`;
+        return;
+      }
+      body.style.display = "block";
+      notice.innerHTML = "";
+      try {
+        const [vRes, bRes, sRes] = await Promise.all([dbFetch("/visitors"), dbFetch("/bans"), pubFetch("/settings")]);
+        if (!vRes.ok) throw new Error("HTTP " + vRes.status + ". Controleer de Rules");
+        visitorsCache = (await vRes.json()) || {};
+        bansCache = bRes.ok ? ((await bRes.json()) || {}) : {};
+        const st = sRes.ok ? await sRes.json() : null;
+        document.getElementById("optMaintenance").checked = Boolean(st && st.maintenance);
+        document.getElementById("optMaintenanceText").value = st && st.maintenanceText ? st.maintenanceText : "";
+        document.getElementById("optChat").checked = !(st && st.chat === false);
+      } catch (err) {
+        document.getElementById("visitorList").innerHTML = `<div class="empty-note">Laden mislukt (${escapeHtml(err.message)}).</div>`;
+        return;
+      }
+      renderStats();
+      const read = readMap();
+      const rows = Object.entries(visitorsCache)
+        .filter(([, v]) => v && typeof v.seen === "number")
+        .sort((a, b) => b[1].seen - a[1].seen)
+        .slice(0, 60);
+      document.getElementById("visitorList").innerHTML = rows.length ? rows.map(([vid, v]) => {
+        const online = Date.now() - v.seen < 120000;
+        const banned = Boolean(bansCache[vid]);
+        const fresh = v.lastMsg && v.lastMsg > (read[vid] || 0);
+        return `
+          <div class="item-row">
+            <div class="item-info">
+              <strong>${escapeHtml(v.name || "Naamloos")} <small style="color:#94a3b8;">#${escapeHtml(vid.slice(0, 6))}</small>
+                ${online ? `<span class="chip ok">Online</span>` : ""}${banned ? `<span class="chip off">Geblokkeerd</span>` : ""}${fresh ? `<span class="chip ok">💬 nieuw</span>` : ""}</strong>
+              <small>Laatst gezien: ${escapeHtml(timeAgo(v.seen))}</small>
+            </div>
+            <button type="button" class="btn" onclick="openAdminChat('${escapeHtml(vid)}')">💬 Chat</button>
+            ${banned ? "" : `<button type="button" class="btn danger" onclick="openBanModal('${escapeHtml(vid)}')">Blokkeren</button>`}
+          </div>`;
+      }).join("") : `<div class="empty-note">Nog geen bezoekers gezien. Ze verschijnen hier zodra iemand de site opent.</div>`;
+      const bl = Object.entries(bansCache).filter(([, b]) => b && typeof b === "object");
+      document.getElementById("banListReal").innerHTML = bl.length ? bl.map(([vid, b]) => `
+        <div class="item-row">
+          <div class="item-info">
+            <strong>🚫 ${escapeHtml(b.name || (visitorsCache[vid] && visitorsCache[vid].name) || "#" + vid.slice(0, 6))}</strong>
+            <small>${b.until ? "Tot " + escapeHtml(new Date(b.until).toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })) : "Voor altijd"}${b.reason ? " · " + escapeHtml(b.reason) : ""}${b.by ? " · door " + escapeHtml(b.by) : ""}</small>
+          </div>
+          <button type="button" class="btn" onclick="unban('${escapeHtml(vid)}')">Opheffen</button>
+        </div>`).join("") : `<div class="empty-note">Niemand geblokkeerd.</div>`;
+    }
+
+    let banTarget = "";
+    function openBanModal(vid) {
+      banTarget = vid;
+      const v = visitorsCache[vid] || {};
+      document.getElementById("banWho").textContent = `Je blokkeert ${v.name || "naamloos"} (#${vid.slice(0, 6)}).`;
+      document.getElementById("banReason").value = "";
+      document.getElementById("banModal").classList.add("open");
+    }
+    function closeBanModal() { document.getElementById("banModal").classList.remove("open"); }
+
+    async function confirmBan() {
+      if (!banTarget || !isAdmin) return;
+      const mins = Number(document.getElementById("banDuration").value);
+      const reason = document.getElementById("banReason").value.trim().slice(0, 120);
+      const v = visitorsCache[banTarget] || {};
+      const body = { t: Date.now(), by: adminName, reason, until: mins ? Date.now() + mins * 60000 : 0, name: v.name || "" };
+      try {
+        const res = await dbFetch("/bans/" + banTarget, { method: "PUT", body });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        logAction(`Bezoeker ${v.name || "#" + banTarget.slice(0, 6)} geblokkeerd` + (mins ? ` (${mins} min)` : " (voor altijd)"));
+        closeBanModal();
+        renderVisitorsPanel();
+      } catch (err) {
+        alert("Blokkeren mislukt: " + err.message);
+      }
+    }
+
+    async function unban(vid) {
+      try {
+        const res = await dbFetch("/bans/" + vid, { method: "DELETE" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const v = visitorsCache[vid] || {};
+        logAction(`Blokkade opgeheven: ${v.name || "#" + vid.slice(0, 6)}`);
+        renderVisitorsPanel();
+      } catch (err) {
+        alert("Opheffen mislukt: " + err.message);
+      }
+    }
+
+    async function sendNotice() {
+      const text = document.getElementById("noticeText").value.trim();
+      if (!text) return alert("Typ eerst een bericht.");
+      try {
+        const res = await dbFetch("/notice", { method: "PUT", body: { id: Date.now().toString(36), text: text.slice(0, 300), t: Date.now(), by: adminName } });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        logAction(`Bericht aan iedereen: ${text.slice(0, 60)}`);
+        document.getElementById("noticeText").value = "";
+        alert("Verstuurd. Bezoekers zien het binnen 20 seconden.");
+      } catch (err) { alert("Versturen mislukt: " + err.message); }
+    }
+
+    async function clearNotice() {
+      try {
+        await dbFetch("/notice", { method: "DELETE" });
+        logAction("Bericht aan iedereen ingetrokken");
+      } catch (_) {}
+    }
+
+    async function saveSiteOptions() {
+      const body = {
+        maintenance: document.getElementById("optMaintenance").checked,
+        maintenanceText: document.getElementById("optMaintenanceText").value.trim().slice(0, 120),
+        chat: document.getElementById("optChat").checked
+      };
+      try {
+        const res = await dbFetch("/settings", { method: "PUT", body });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        logAction(`Site-opties aangepast (onderhoud ${body.maintenance ? "aan" : "uit"}, chat ${body.chat ? "aan" : "uit"})`);
+        alert("Opgeslagen.");
+      } catch (err) { alert("Opslaan mislukt: " + err.message); }
+    }
+
+    async function loadAdminThread() {
+      if (!chatWith) return;
+      try {
+        const res = await dbFetch("/thread/" + chatWith, { query: "orderBy=%22%24key%22&limitToLast=60" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const msgs = Object.values(data || {}).filter(m => m && typeof m.t === "number" && typeof m.text === "string").sort((a, b) => a.t - b.t);
+        renderThread("adminChatMsgs", msgs, "a");
+        const read = readMap();
+        if (msgs.length) { read[chatWith] = Math.max(...msgs.map(m => m.t)); localStorage.setItem(ADMIN_READ_KEY, JSON.stringify(read)); }
+      } catch (_) {}
+    }
+
+    function openAdminChat(vid) {
+      chatWith = vid;
+      const v = visitorsCache[vid] || {};
+      document.getElementById("adminChatTitle").textContent = `Chat met ${v.name || "naamloos"} (#${vid.slice(0, 6)})`;
+      document.getElementById("adminChatBox").style.display = "block";
+      document.getElementById("adminChatMsgs").innerHTML = "";
+      clearInterval(adminChatTimer);
+      loadAdminThread();
+      adminChatTimer = setInterval(loadAdminThread, 4000);
+      document.getElementById("adminChatBox").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function closeAdminChat() {
+      chatWith = null;
+      clearInterval(adminChatTimer);
+      document.getElementById("adminChatBox").style.display = "none";
+      if (document.getElementById("sec-bezoekers").style.display === "block") renderVisitorsPanel();
+    }
+
+    async function sendAdminChat() {
+      const input = document.getElementById("adminChatInput");
+      const text = input.value.trim();
+      if (!text || !chatWith) return;
+      input.value = "";
+      try {
+        const res = await dbFetch("/thread/" + chatWith, { method: "POST", body: { t: Date.now(), from: "a", name: adminName, text } });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        loadAdminThread();
+      } catch (err) {
+        input.value = text;
+        alert("Versturen mislukt: " + err.message);
+      }
     }
 
     function adminTick() {
@@ -3440,6 +3911,8 @@
     const cloudInit = loadCloud();
     setInterval(() => { if (!isAdmin && !document.hidden) loadCloud(); }, 20000);
     setInterval(adminTick, 20000);
+    visitorTick();
+    setInterval(visitorTick, 20000);
 
     // Laadscherm: weg zodra de pagina en de online games klaar zijn
     (function hideLoader() {
